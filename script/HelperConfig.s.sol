@@ -14,7 +14,7 @@ contract HelperConfig is Script {
         address vrfCoordinator;
         bytes32 keyHash;
         uint256 deployerKey;
-        bool isMainnet;
+        bool isAnvil;
     }
 
     uint256 public constant DEFAULT_ANVIL_KEY = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
@@ -37,7 +37,7 @@ contract HelperConfig is Script {
             vrfCoordinator: address(0),
             keyHash: bytes32(0),
             deployerKey: DEFAULT_ANVIL_KEY,
-            isMainnet: false
+            isAnvil: true
         });
     }
 
@@ -50,7 +50,7 @@ contract HelperConfig is Script {
             vrfCoordinator: 0x50d47e4142598E3411aA864e08a44284e471AC6f,
             keyHash: 0x027f94ff1465b3525f9fc03e9ff7d6d2c0953482246dd6ae07570c45d6631414,
             deployerKey: vm.envUint("PRIVATE_KEY"),
-            isMainnet: false
+            isAnvil: false
         });
     }
 
@@ -62,7 +62,7 @@ contract HelperConfig is Script {
             vrfCoordinator: 0x41034678D6C633D8a95c75e1138A360a28bA15d1,
             keyHash: 0x68d24f9a037a649944964c2a1ebd0b2918f4a243d2a99701cc22b548cf2daff0,
             deployerKey: vm.envUint("PRIVATE_KEY"),
-            isMainnet: true
+            isAnvil: false
         });
     }
 }

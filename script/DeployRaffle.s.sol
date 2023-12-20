@@ -21,24 +21,40 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract DeployRaffle is Script {
     HelperConfig public helperConfig;
-    BRRRaffle public raffle;
-    RNG public rng;
-    MockRNG public mockRng;
-    RewardValidator public rewardValidator;
 
-    address usdc;
+    struct Contracts {
+        address usdc;
+        BRRRaffle raffle;
+        RewardValidator rewardValidator;
+        address rng; // address to generalize
+        address owner;
+    }
+
     uint64 subscriptionId;
     address vrfCoordinator;
     bytes32 keyHash;
     uint256 deployerKey;
-    bool isMainnet;
+    bool isAnvil;
 
-    function run() public {
+    function run() external returns (Contracts memory) {
         helperConfig = new HelperConfig();
-        (usdc, subscriptionId, vrfCoordinator, keyHash, deployerKey, isMainnet) = helperConfig.activeNetworkConfig();
+
+        Contracts memory contracts;
+
+        (contracts.usdc, subscriptionId, vrfCoordinator, keyHash, deployerKey, isAnvil) =
+            helperConfig.activeNetworkConfig();
 
         vm.startBroadcast(deployerKey);
+        contracts.owner = msg.sender;
+        contracts.rewardValidator = new RewardValidator();
+        if (isAnvil) {
+            contracts.rng = address(new MockRNG());
+        } else {
+            contracts.rng = address(new RNG(subscriptionId, vrfCoordinator, keyHash));
+        }
+        contracts.raffle = new BRRRaffle(contracts.usdc, contracts.rng, address(contracts.rewardValidator));
 
         vm.stopBroadcast();
+        return contracts;
     }
 }

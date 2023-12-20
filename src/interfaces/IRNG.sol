@@ -3,17 +3,23 @@ pragma solidity 0.8.20;
 
 interface IRNG {
     /**
-     * Requests a random number from the RNG
+     * @notice Request random words from ChainLink's VRF Coordinator
      */
     function requestRandomWords() external returns (uint256 requestId);
 
     /**
-     * View latest lotteryId numbers
+     * @notice Set the address for the brrRaffle
+     * @param _brrRaffle: address of the BRR Raffle
+     */
+    function setRaffleAddress(address _brrRaffle) external;
+
+    /**
+     * @notice View latestRaffleId
      */
     function viewLatestRaffleId() external view returns (uint256);
 
     /**
-     * Views random result
+     * @notice View random result
      */
     function viewRandomResult() external view returns (uint32);
 }
