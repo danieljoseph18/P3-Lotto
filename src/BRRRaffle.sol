@@ -254,14 +254,14 @@ contract BRRRaffle is ReentrancyGuard, IBRRRaffle, Ownable {
     }
 
     function claimFreeTickets(uint256 _lotteryId, uint32[] memory _ticketNumbers) external nonReentrant notContract {
-        // checks the user has earned x amount of tickets
-        if (!rewardValidator.validateTickets(msg.sender, uint8(_ticketNumbers.length))) {
-            revert BRRRaffle_InvalidTicketClaim();
-        }
         // checks the lottery is open
         if (_lotteries[_lotteryId].status != Status.Open) revert BRRRaffle_LotteryNotOpen();
         // checks the lottery has not finished
         if (block.timestamp >= _lotteries[_lotteryId].endTime) revert BRRRaffle_LotteryHasFinished();
+        // checks the user has earned x amount of tickets
+        if (!rewardValidator.validateTickets(msg.sender, uint8(_ticketNumbers.length))) {
+            revert BRRRaffle_InvalidTicketClaim();
+        }
         // assigns the ticket to the user
         _assignTickets(_lotteryId, _ticketNumbers);
     }

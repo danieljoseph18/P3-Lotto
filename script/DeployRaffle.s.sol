@@ -9,16 +9,6 @@ import {MockRNG} from "../test/mocks/MockRNG.sol";
 import {RewardValidator} from "../src/RewardValidator.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-/**
- * struct NetworkConfig {
- *         address usdc;
- *         uint64 subscriptionId;
- *         address vrfCoordinator;
- *         bytes32 keyHash;
- *         uint256 deployerKey;
- *     }
- */
-
 contract DeployRaffle is Script {
     HelperConfig public helperConfig;
 
@@ -53,7 +43,12 @@ contract DeployRaffle is Script {
             contracts.rng = address(new RNG(subscriptionId, vrfCoordinator, keyHash));
         }
         contracts.raffle = new BRRRaffle(contracts.usdc, contracts.rng, address(contracts.rewardValidator));
+        RNG(contracts.rng).setRaffleAddress(address(contracts.raffle));
+        contracts.raffle.setOperatorAndTreasuryAndInjectorAddresses(msg.sender, msg.sender, msg.sender);
 
+        // transfer ownership to contracts.owner
+        contracts.raffle.transferOwnership(contracts.owner);
+        RNG(contracts.rng).transferOwnership(contracts.owner);
         vm.stopBroadcast();
         return contracts;
     }
