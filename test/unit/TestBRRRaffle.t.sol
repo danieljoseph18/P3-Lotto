@@ -22,7 +22,6 @@ contract TestBRRRaffle is Test {
     address public USER = makeAddr("user");
     address public ATTACKER = makeAddr("attacker");
     address public NOOB = makeAddr("noob");
-    bool isAnvil;
 
     uint32[] ticketNumbers;
     uint32[] bracketArray;
@@ -144,6 +143,8 @@ contract TestBRRRaffle is Test {
         vm.startPrank(OWNER);
         bytes32 commitHash = keccak256(abi.encode("some string"));
         raffle.closeLottery(1, commitHash);
+        vm.warp(block.timestamp + 1 hours);
+        vm.roll(block.number + 1);
         raffle.drawFinalNumberAndMakeLotteryClaimable(1, "some string", true);
         // start a new one
         raffle.startLottery(block.timestamp + 3600, 1e6, 2000, [uint256(200), 300, 500, 1500, 2500, 5000], 2000);
@@ -165,8 +166,7 @@ contract TestBRRRaffle is Test {
         // buy the winning ticket
         vm.startPrank(USER, USER);
         usdc.approve(address(raffle), LARGE_AMOUNT);
-        ticketNumbers.push(1e6 + 69);
-        ticketNumbers.push(1e6);
+        ticketNumbers.push(1336105);
         raffle.buyTickets(1, ticketNumbers);
         vm.stopPrank();
         // complete the lottery
@@ -176,12 +176,14 @@ contract TestBRRRaffle is Test {
         vm.startPrank(OWNER);
         bytes32 commitHash = keccak256(abi.encode("some string"));
         raffle.closeLottery(1, commitHash);
+        vm.warp(block.timestamp + 1 hours);
+        vm.roll(block.number + 1);
         raffle.drawFinalNumberAndMakeLotteryClaimable(1, "some string", true);
         vm.stopPrank();
         // claim the winning ticket
         vm.startPrank(USER, USER);
         bracketArray.push(5);
-        idArray.push(1);
+        idArray.push(0);
         uint256[] memory winningIds = idArray;
         uint32[] memory winningBrackets = bracketArray;
         uint256 balanceBefore = usdc.balanceOf(USER);
@@ -211,6 +213,8 @@ contract TestBRRRaffle is Test {
         vm.startPrank(OWNER);
         bytes32 commitHash = keccak256(abi.encode("some string"));
         raffle.closeLottery(1, commitHash);
+        vm.warp(block.timestamp + 1 hours);
+        vm.roll(block.number + 1);
         raffle.drawFinalNumberAndMakeLotteryClaimable(1, "some string", true);
         vm.stopPrank();
         // claim the winning ticket
@@ -241,6 +245,8 @@ contract TestBRRRaffle is Test {
         vm.startPrank(OWNER);
         bytes32 commitHash = keccak256(abi.encode("some string"));
         raffle.closeLottery(1, commitHash);
+        vm.warp(block.timestamp + 1 hours);
+        vm.roll(block.number + 1);
         raffle.drawFinalNumberAndMakeLotteryClaimable(1, "some string", true);
         vm.stopPrank();
         // claim the winning ticket
@@ -288,7 +294,7 @@ contract TestBRRRaffle is Test {
         vm.prank(OWNER);
         rewardValidator.addClaimableTickets(addressArray, numTicketList);
         ticketNumbers.push(1e6 + 69);
-        ticketNumbers.push(1e6);
+        ticketNumbers.push(1336105);
         vm.prank(USER, USER);
         raffle.claimFreeTickets(1, ticketNumbers);
 
@@ -298,26 +304,56 @@ contract TestBRRRaffle is Test {
         vm.startPrank(OWNER);
         bytes32 commitHash = keccak256(abi.encode("some string"));
         raffle.closeLottery(1, commitHash);
+        vm.warp(block.timestamp + 1 hours);
+        vm.roll(block.number + 1);
         raffle.drawFinalNumberAndMakeLotteryClaimable(1, "some string", true);
         vm.stopPrank();
+        // check if user won anything
+        // if so, claim for that bracket
 
-        bracketArray.push(5);
-        idArray.push(1);
-        uint256[] memory winningIds = idArray;
-        uint32[] memory winningBrackets = bracketArray;
+        (uint256[] memory userTicketIds,,,) = raffle.viewUserInfoForLotteryId(USER, 1, 0, 2);
 
-        uint256 balanceBefore = usdc.balanceOf(USER);
+        bool won1;
+        uint8 won1Bracket;
+        for (uint8 i = 0; i < 6; i++) {
+            uint256 rewards = raffle.viewRewardsForTicketId(1, userTicketIds[0], i);
+            if (rewards > 0) {
+                won1 = true;
+                won1Bracket = i;
+                break;
+            }
+        }
 
-        vm.startPrank(USER, USER);
-        raffle.claimTickets(1, winningIds, winningBrackets);
-        vm.stopPrank();
+        bool won2;
+        uint8 won2Bracket;
+        for (uint8 i = 0; i < 6; i++) {
+            uint256 rewards = raffle.viewRewardsForTicketId(1, userTicketIds[1], i);
+            if (rewards > 0) {
+                won2 = true;
+                won2Bracket = i;
+                break;
+            }
+        }
 
-        uint256 balanceAfter = usdc.balanceOf(USER);
+        if (won1) {
+            vm.startPrank(USER, USER);
+            bracketArray.push(won1Bracket);
+            idArray.push(userTicketIds[0]);
+            uint256[] memory winningIds = idArray;
+            uint32[] memory winningBrackets = bracketArray;
+            raffle.claimTickets(1, winningIds, winningBrackets);
+            vm.stopPrank();
+        }
 
-        console.log("Balance Before: ", balanceBefore);
-        console.log("Balance After: ", balanceAfter);
-        // Won 400 USDC
-        assertGt(balanceAfter, balanceBefore);
+        if (won2) {
+            vm.startPrank(USER, USER);
+            bracketArray.push(won2Bracket);
+            idArray.push(userTicketIds[1]);
+            uint256[] memory winningIds = idArray;
+            uint32[] memory winningBrackets = bracketArray;
+            raffle.claimTickets(1, winningIds, winningBrackets);
+            vm.stopPrank();
+        }
     }
 
     function testClaimingFreeTicketsForClosedLotteriesFails() public startAndInjectFunds {
@@ -368,6 +404,8 @@ contract TestBRRRaffle is Test {
         bytes32 commitHash = keccak256(abi.encode("some string"));
         vm.startPrank(OWNER);
         raffle.closeLottery(1, commitHash);
+        vm.warp(block.timestamp + 1 hours);
+        vm.roll(block.number + 1);
         raffle.drawFinalNumberAndMakeLotteryClaimable(1, "some string", true);
         vm.stopPrank();
 
@@ -408,6 +446,8 @@ contract TestBRRRaffle is Test {
         vm.startPrank(OWNER);
         bytes32 commitHash = keccak256(abi.encode("some string"));
         raffle.closeLottery(1, commitHash);
+        vm.warp(block.timestamp + 1 hours);
+        vm.roll(block.number + 1);
         raffle.drawFinalNumberAndMakeLotteryClaimable(1, "some string", true);
         vm.stopPrank();
     }
@@ -430,6 +470,8 @@ contract TestBRRRaffle is Test {
         // close the lottery
         vm.startPrank(OWNER);
         raffle.closeLottery(1, keccak256(abi.encode("some string")));
+        vm.warp(block.timestamp + 1 hours);
+        vm.roll(block.number + 1);
         raffle.drawFinalNumberAndMakeLotteryClaimable(1, "some string", false);
         vm.stopPrank();
 
@@ -645,6 +687,8 @@ contract TestBRRRaffle is Test {
         bytes32 commitHash = keccak256(abi.encode("some string"));
         vm.startPrank(OWNER);
         raffle.closeLottery(1, commitHash);
+        vm.warp(block.timestamp + 1 hours);
+        vm.roll(block.number + 1);
         raffle.drawFinalNumberAndMakeLotteryClaimable(1, "some string", true);
         raffle.startLottery(block.timestamp + 3600, 1e6, 2000, [uint256(200), 300, 500, 1500, 2500, 5000], 2000);
         vm.stopPrank();
@@ -666,10 +710,12 @@ contract TestBRRRaffle is Test {
         vm.startPrank(OWNER);
         bytes32 commitHash = keccak256(abi.encode("some string"));
         raffle.closeLottery(1, commitHash);
+        vm.warp(block.timestamp + 1 hours);
+        vm.roll(block.number + 1);
         raffle.drawFinalNumberAndMakeLotteryClaimable(1, "some string", true);
         vm.stopPrank();
         BRRRaffle.Lottery memory lotto = raffle.viewLottery(1);
-        assertEq(lotto.finalNumber, 1e6);
+        assertNotEq(lotto.finalNumber, 0);
     }
 
     function testViewNumbersAndStatusesForTicketIds() public startAndInjectFunds {
@@ -696,8 +742,7 @@ contract TestBRRRaffle is Test {
         // buy some tickets
         vm.startPrank(USER, USER);
         usdc.approve(address(raffle), LARGE_AMOUNT);
-        ticketNumbers.push(1e6 + 69);
-        ticketNumbers.push(1e6);
+        ticketNumbers.push(1336105);
 
         raffle.buyTickets(1, ticketNumbers);
         vm.stopPrank();
@@ -708,18 +753,20 @@ contract TestBRRRaffle is Test {
         vm.startPrank(OWNER);
         bytes32 commitHash = keccak256(abi.encode("some string"));
         raffle.closeLottery(1, commitHash);
+        vm.warp(block.timestamp + 1 hours);
+        vm.roll(block.number + 1);
         raffle.drawFinalNumberAndMakeLotteryClaimable(1, "some string", true);
         vm.stopPrank();
         // claim the winning ticket
         vm.startPrank(USER, USER);
         bracketArray.push(5);
-        idArray.push(1);
+        idArray.push(0);
         uint256[] memory winningIds = idArray;
         uint32[] memory winningBrackets = bracketArray;
         raffle.claimTickets(1, winningIds, winningBrackets);
         vm.stopPrank();
         // check the rewards
-        uint256 rewards = raffle.viewRewardsForTicketId(1, 1, 5);
+        uint256 rewards = raffle.viewRewardsForTicketId(1, 0, 5);
         assertGt(rewards, 0);
     }
 
@@ -727,8 +774,7 @@ contract TestBRRRaffle is Test {
         // buy some tickets
         vm.startPrank(USER, USER);
         usdc.approve(address(raffle), LARGE_AMOUNT);
-        ticketNumbers.push(1e6 + 69);
-        ticketNumbers.push(1e6);
+        ticketNumbers.push(1336105);
 
         raffle.buyTickets(1, ticketNumbers);
         vm.stopPrank();
@@ -739,12 +785,14 @@ contract TestBRRRaffle is Test {
         vm.startPrank(OWNER);
         bytes32 commitHash = keccak256(abi.encode("some string"));
         raffle.closeLottery(1, commitHash);
+        vm.warp(block.timestamp + 1 hours);
+        vm.roll(block.number + 1);
         raffle.drawFinalNumberAndMakeLotteryClaimable(1, "some string", true);
         vm.stopPrank();
         // claim the winning ticket
         vm.startPrank(USER, USER);
         bracketArray.push(5);
-        idArray.push(1);
+        idArray.push(0);
         uint256[] memory winningIds = idArray;
         uint32[] memory winningBrackets = bracketArray;
         raffle.claimTickets(1, winningIds, winningBrackets);

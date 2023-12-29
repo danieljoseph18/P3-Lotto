@@ -2,6 +2,7 @@
 pragma solidity 0.8.23;
 
 import {INativeRNG} from "./interfaces/INativeRNG.sol";
+import {Types} from "./libraries/Types.sol";
 
 // Contract to natively generate a pseudo-random number
 // Required as Chainlink VRF not supported on Base
@@ -24,23 +25,18 @@ contract NativeRNG is INativeRNG {
 
     address public brrRaffle;
 
-    struct Request {
-        bool fulfilled;
-        bool exists;
-        uint32 randomResult;
-        uint256 minUpdateTime;
-        bytes32 commitHash;
-    }
-
     uint256[] public requestIds;
-    uint256 public lastRequestId;
-    mapping(uint256 => Request) public requests;
+    uint256 private lastRequestId;
+    mapping(uint256 => Types.Request) private requests;
 
     uint32 public lastRandomNumber;
 
-    uint256 latestRaffleId;
-
-    constructor() {}
+    constructor() {
+        // Fulfill the 0 request
+        requests[0] =
+            Types.Request({fulfilled: true, exists: true, randomResult: 0, minUpdateTime: 0, commitHash: bytes32(0)});
+        requestIds.push(0);
+    }
 
     modifier onlyRaffle() {
         if (msg.sender != brrRaffle) revert NativeRNG_CallerIsNotRaffle();
@@ -53,11 +49,12 @@ contract NativeRNG is INativeRNG {
         brrRaffle = _brrRaffle;
     }
 
+    // Create a Request for a Random Number
     function requestRandomness(bytes32 _commitHash) external onlyRaffle {
         if (_commitHash == bytes32(0)) revert NativeRNG_InvalidCommitHash();
         if (!requests[lastRequestId].fulfilled) revert NativeRNG_PrevRandomnessNotFulfilled();
         lastRequestId++;
-        requests[lastRequestId] = Request({
+        requests[lastRequestId] = Types.Request({
             fulfilled: false,
             exists: true,
             randomResult: 0,
@@ -70,7 +67,7 @@ contract NativeRNG is INativeRNG {
 
     /// @dev Number is Pseudo-Random -> For True Randomness Consider Chainlink VRF
     function generateRandomNumber(uint256 _requestId, string memory _seed) external onlyRaffle returns (uint32) {
-        Request memory request = requests[_requestId];
+        Types.Request memory request = requests[_requestId];
         if (!request.exists) revert NativeRNG_RequestDoesNotExist();
         if (request.commitHash != keccak256(abi.encode(_seed))) {
             revert NativeRNG_InvalidSeed();
@@ -104,6 +101,10 @@ contract NativeRNG is INativeRNG {
     }
 
     function viewLatestRaffleId() external view returns (uint256) {
-        return latestRaffleId;
+        return lastRequestId;
+    }
+
+    function getRequest(uint256 _id) external view returns (Types.Request memory) {
+        return requests[_id];
     }
 }

@@ -114,7 +114,7 @@ contract BRRRaffle is ReentrancyGuard, IBRRRaffle, Ownable {
     error BRRRaffle_BracketMustBeHigher();
     error BRRRaffle_LotteryNotClosed();
     error BRRRaffle_LotteryHasNotFinished();
-    error BRRRaffle_NumbersNotDrawn();
+    error BRRRaffle_NonExistentRequest();
     error BRRRaffle_CannotRecoverUSDC();
     error BRRRaffle_MinPriceGreaterThanMaxPrice();
     error BRRRaffle_MaxTicketsMustBeGreaterThanZero();
@@ -142,6 +142,7 @@ contract BRRRaffle is ReentrancyGuard, IBRRRaffle, Ownable {
     event NewOperatorAndTreasuryAndInjectorAddresses(address operator, address treasury, address injector);
     event NewRandomGenerator(address indexed randomGenerator);
     event TicketsPurchased(address indexed buyer, uint256 indexed lotteryId, uint256 numberTickets);
+    event FreeTicketsClaim(address indexed user, uint256 indexed lotteryId, uint256 numberTickets);
     event TicketsClaim(address indexed claimer, uint256 amount, uint256 indexed lotteryId, uint256 numberTickets);
 
     /**
@@ -264,6 +265,8 @@ contract BRRRaffle is ReentrancyGuard, IBRRRaffle, Ownable {
         }
         // assigns the ticket to the user
         _assignTickets(_lotteryId, _ticketNumbers);
+
+        emit FreeTicketsClaim(msg.sender, _lotteryId, _ticketNumbers.length);
     }
 
     function _assignTickets(uint256 _lotteryId, uint32[] memory _ticketNumbers) private {
@@ -322,7 +325,9 @@ contract BRRRaffle is ReentrancyGuard, IBRRRaffle, Ownable {
         onlyOperator
     {
         if (_lotteries[_lotteryId].status != Status.Close) revert BRRRaffle_LotteryNotClosed();
-        if (randomGenerator.viewLatestRaffleId() != _lotteryId) revert BRRRaffle_NumbersNotDrawn();
+        if (!randomGenerator.getRequest(randomGenerator.viewLatestRaffleId()).exists) {
+            revert BRRRaffle_NonExistentRequest();
+        }
 
         // Generate a Random number using NativeRNG
         uint32 finalNumber = randomGenerator.generateRandomNumber(_lotteryId, _commit);
