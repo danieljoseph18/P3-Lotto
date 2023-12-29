@@ -17,7 +17,6 @@ contract TestBRRRaffle is Test {
 
     uint256 public constant LARGE_AMOUNT = 1e18;
 
-    address public DEFAULT_ANVIL_ADDRESS = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
     address public OWNER;
     address public USER = makeAddr("user");
     address public ATTACKER = makeAddr("attacker");
