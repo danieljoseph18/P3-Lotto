@@ -1,18 +1,17 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.20;
+pragma solidity 0.8.23;
 
 import {Test, console} from "forge-std/Test.sol";
 import {DeployRaffle} from "../../script/DeployRaffle.s.sol";
 import {BRRRaffle} from "../../src/BRRRaffle.sol";
-import {IRNG} from "../../src/interfaces/IRNG.sol";
+import {INativeRNG} from "../../src/interfaces/INativeRNG.sol";
 import {RewardValidator} from "../../src/RewardValidator.sol";
 import {MockERC20} from "../mocks/MockERC20.sol";
-import {MockRNG} from "../mocks/MockRNG.sol";
-import {RNG} from "../../src/RNG.sol";
+import {NativeRNG} from "../../src/NativeRNG.sol";
 
 contract TestBRRRaffle is Test {
     BRRRaffle public raffle;
-    IRNG public rng;
+    INativeRNG public rng;
     RewardValidator public rewardValidator;
     MockERC20 public usdc;
 
@@ -35,7 +34,7 @@ contract TestBRRRaffle is Test {
         DeployRaffle deployRaffle = new DeployRaffle();
         DeployRaffle.Contracts memory contracts = deployRaffle.run();
         raffle = contracts.raffle;
-        rng = IRNG(contracts.rng);
+        rng = INativeRNG(contracts.rng);
         rewardValidator = contracts.rewardValidator;
         OWNER = contracts.owner;
         usdc = MockERC20(contracts.usdc);
@@ -143,11 +142,9 @@ contract TestBRRRaffle is Test {
         vm.warp(block.timestamp + 1 days);
         vm.roll(block.timestamp + 1);
         vm.startPrank(OWNER);
-        if (OWNER == DEFAULT_ANVIL_ADDRESS) {
-            MockRNG(address(rng)).setNextRandomResult(1e6 + 69);
-        }
-        raffle.closeLottery(1);
-        raffle.drawFinalNumberAndMakeLotteryClaimable(1, true);
+        bytes32 commitHash = keccak256(abi.encode("some string"));
+        raffle.closeLottery(1, commitHash);
+        raffle.drawFinalNumberAndMakeLotteryClaimable(1, "some string", true);
         // start a new one
         raffle.startLottery(block.timestamp + 3600, 1e6, 2000, [uint256(200), 300, 500, 1500, 2500, 5000], 2000);
         vm.stopPrank();
@@ -177,11 +174,9 @@ contract TestBRRRaffle is Test {
         vm.roll(block.timestamp + 1);
         // close the lottery and draw the winning number
         vm.startPrank(OWNER);
-        if (OWNER == DEFAULT_ANVIL_ADDRESS) {
-            MockRNG(address(rng)).setNextRandomResult(1e6 + 69);
-        }
-        raffle.closeLottery(1);
-        raffle.drawFinalNumberAndMakeLotteryClaimable(1, true);
+        bytes32 commitHash = keccak256(abi.encode("some string"));
+        raffle.closeLottery(1, commitHash);
+        raffle.drawFinalNumberAndMakeLotteryClaimable(1, "some string", true);
         vm.stopPrank();
         // claim the winning ticket
         vm.startPrank(USER, USER);
@@ -214,11 +209,9 @@ contract TestBRRRaffle is Test {
         vm.roll(block.timestamp + 1);
         // close the lottery and draw the winning number
         vm.startPrank(OWNER);
-        if (OWNER == DEFAULT_ANVIL_ADDRESS) {
-            MockRNG(address(rng)).setNextRandomResult(1e6 + 69);
-        }
-        raffle.closeLottery(1);
-        raffle.drawFinalNumberAndMakeLotteryClaimable(1, true);
+        bytes32 commitHash = keccak256(abi.encode("some string"));
+        raffle.closeLottery(1, commitHash);
+        raffle.drawFinalNumberAndMakeLotteryClaimable(1, "some string", true);
         vm.stopPrank();
         // claim the winning ticket
         vm.startPrank(USER, USER);
@@ -246,11 +239,9 @@ contract TestBRRRaffle is Test {
         vm.roll(block.timestamp + 1);
         // close the lottery and draw the winning number
         vm.startPrank(OWNER);
-        if (OWNER == DEFAULT_ANVIL_ADDRESS) {
-            MockRNG(address(rng)).setNextRandomResult(1e6 + 69);
-        }
-        raffle.closeLottery(1);
-        raffle.drawFinalNumberAndMakeLotteryClaimable(1, true);
+        bytes32 commitHash = keccak256(abi.encode("some string"));
+        raffle.closeLottery(1, commitHash);
+        raffle.drawFinalNumberAndMakeLotteryClaimable(1, "some string", true);
         vm.stopPrank();
         // claim the winning ticket
         vm.startPrank(USER, USER);
@@ -305,11 +296,9 @@ contract TestBRRRaffle is Test {
         vm.roll(block.timestamp + 1);
 
         vm.startPrank(OWNER);
-        if (OWNER == DEFAULT_ANVIL_ADDRESS) {
-            MockRNG(address(rng)).setNextRandomResult(1e6 + 69);
-        }
-        raffle.closeLottery(1);
-        raffle.drawFinalNumberAndMakeLotteryClaimable(1, true);
+        bytes32 commitHash = keccak256(abi.encode("some string"));
+        raffle.closeLottery(1, commitHash);
+        raffle.drawFinalNumberAndMakeLotteryClaimable(1, "some string", true);
         vm.stopPrank();
 
         bracketArray.push(5);
@@ -364,21 +353,22 @@ contract TestBRRRaffle is Test {
         vm.roll(block.number + 1);
         vm.prank(USER);
         vm.expectRevert();
-        raffle.closeLottery(1);
+        raffle.closeLottery(1, keccak256(abi.encode("some string")));
     }
 
     function testOwnerCantCloseTheLotteryPrematurely() public startAndInjectFunds {
         vm.prank(OWNER);
         vm.expectRevert();
-        raffle.closeLottery(1);
+        raffle.closeLottery(1, keccak256(abi.encode("some string")));
     }
 
     function testOwnerCantCallCloseOnAPreviouslyEndedLottery() public startAndInjectFunds {
         vm.warp(block.timestamp + 1 days);
         vm.roll(block.number + 1);
+        bytes32 commitHash = keccak256(abi.encode("some string"));
         vm.startPrank(OWNER);
-        raffle.closeLottery(1);
-        raffle.drawFinalNumberAndMakeLotteryClaimable(1, true);
+        raffle.closeLottery(1, commitHash);
+        raffle.drawFinalNumberAndMakeLotteryClaimable(1, "some string", true);
         vm.stopPrank();
 
         // start a new lottery
@@ -391,7 +381,7 @@ contract TestBRRRaffle is Test {
 
         // try to close the previous lottery
         vm.expectRevert();
-        raffle.closeLottery(1);
+        raffle.closeLottery(1, keccak256(abi.encode("some string")));
     }
 
     //////////////////////////////////////////////////
@@ -403,24 +393,22 @@ contract TestBRRRaffle is Test {
         vm.roll(block.number + 1);
         vm.prank(USER);
         vm.expectRevert();
-        raffle.drawFinalNumberAndMakeLotteryClaimable(1, true);
+        raffle.drawFinalNumberAndMakeLotteryClaimable(1, "some string", true);
     }
 
     function testDrawFinalNumberAndMakeLotteryClaimableOnlyWorksOnClosedLotteries() public startAndInjectFunds {
         vm.prank(OWNER);
         vm.expectRevert();
-        raffle.drawFinalNumberAndMakeLotteryClaimable(1, true);
+        raffle.drawFinalNumberAndMakeLotteryClaimable(1, "some string", true);
     }
 
     function testDrawFinalNumberAndMakeLotteryClaimableWorks() public startAndInjectFunds {
         vm.warp(block.timestamp + 1 days);
         vm.roll(block.number + 1);
         vm.startPrank(OWNER);
-        if (OWNER == DEFAULT_ANVIL_ADDRESS) {
-            MockRNG(address(rng)).setNextRandomResult(1e6 + 69);
-        }
-        raffle.closeLottery(1);
-        raffle.drawFinalNumberAndMakeLotteryClaimable(1, true);
+        bytes32 commitHash = keccak256(abi.encode("some string"));
+        raffle.closeLottery(1, commitHash);
+        raffle.drawFinalNumberAndMakeLotteryClaimable(1, "some string", true);
         vm.stopPrank();
     }
 
@@ -441,8 +429,8 @@ contract TestBRRRaffle is Test {
         uint256 ownerBalanceBefore = usdc.balanceOf(OWNER);
         // close the lottery
         vm.startPrank(OWNER);
-        raffle.closeLottery(1);
-        raffle.drawFinalNumberAndMakeLotteryClaimable(1, false);
+        raffle.closeLottery(1, keccak256(abi.encode("some string")));
+        raffle.drawFinalNumberAndMakeLotteryClaimable(1, "some string", false);
         vm.stopPrank();
 
         // check the owner's balance
@@ -450,28 +438,6 @@ contract TestBRRRaffle is Test {
         console.log("Owner Balance Before: ", ownerBalanceBefore);
         console.log("Owner Balance After: ", ownerBalanceAfter);
         assertGt(ownerBalanceAfter, ownerBalanceBefore);
-    }
-
-    ////////////////////////
-    // CHANGE RNG ADDRESS //
-    ////////////////////////
-
-    function testOnlyOwnerCanChangeRandomGeneratorAddress() public {
-        vm.prank(USER);
-        vm.expectRevert();
-        raffle.changeRandomGenerator(address(0));
-    }
-
-    function testOwnerIsAbleToChangeRandomGeneratorAddress() public {
-        vm.startPrank(OWNER);
-        // create a new RNG
-        MockRNG newRNG = new MockRNG();
-        newRNG.setRaffleAddress(address(raffle));
-        // change the RNG address
-        raffle.changeRandomGenerator(address(newRNG));
-        // check the RNG address
-        assertEq(address(raffle.randomGenerator()), address(newRNG));
-        vm.stopPrank();
     }
 
     //////////////////
@@ -676,9 +642,10 @@ contract TestBRRRaffle is Test {
         assertEq(raffle.currentLotteryId(), 1);
         vm.warp(block.timestamp + 1 days);
         vm.roll(block.number + 1);
+        bytes32 commitHash = keccak256(abi.encode("some string"));
         vm.startPrank(OWNER);
-        raffle.closeLottery(1);
-        raffle.drawFinalNumberAndMakeLotteryClaimable(1, true);
+        raffle.closeLottery(1, commitHash);
+        raffle.drawFinalNumberAndMakeLotteryClaimable(1, "some string", true);
         raffle.startLottery(block.timestamp + 3600, 1e6, 2000, [uint256(200), 300, 500, 1500, 2500, 5000], 2000);
         vm.stopPrank();
         assertEq(raffle.currentLotteryId(), 2);
@@ -697,11 +664,9 @@ contract TestBRRRaffle is Test {
         vm.warp(block.timestamp + 1 days);
         vm.roll(block.number + 1);
         vm.startPrank(OWNER);
-        if (OWNER == DEFAULT_ANVIL_ADDRESS) {
-            MockRNG(address(rng)).setNextRandomResult(1e6 + 69);
-        }
-        raffle.closeLottery(1);
-        raffle.drawFinalNumberAndMakeLotteryClaimable(1, true);
+        bytes32 commitHash = keccak256(abi.encode("some string"));
+        raffle.closeLottery(1, commitHash);
+        raffle.drawFinalNumberAndMakeLotteryClaimable(1, "some string", true);
         vm.stopPrank();
         BRRRaffle.Lottery memory lotto = raffle.viewLottery(1);
         assertEq(lotto.finalNumber, 1e6);
@@ -741,11 +706,9 @@ contract TestBRRRaffle is Test {
         vm.roll(block.timestamp + 1);
         // close the lottery and draw the winning number
         vm.startPrank(OWNER);
-        if (OWNER == DEFAULT_ANVIL_ADDRESS) {
-            MockRNG(address(rng)).setNextRandomResult(1e6 + 69);
-        }
-        raffle.closeLottery(1);
-        raffle.drawFinalNumberAndMakeLotteryClaimable(1, true);
+        bytes32 commitHash = keccak256(abi.encode("some string"));
+        raffle.closeLottery(1, commitHash);
+        raffle.drawFinalNumberAndMakeLotteryClaimable(1, "some string", true);
         vm.stopPrank();
         // claim the winning ticket
         vm.startPrank(USER, USER);
@@ -774,11 +737,9 @@ contract TestBRRRaffle is Test {
         vm.roll(block.timestamp + 1);
         // close the lottery and draw the winning number
         vm.startPrank(OWNER);
-        if (OWNER == DEFAULT_ANVIL_ADDRESS) {
-            MockRNG(address(rng)).setNextRandomResult(1e6 + 69);
-        }
-        raffle.closeLottery(1);
-        raffle.drawFinalNumberAndMakeLotteryClaimable(1, true);
+        bytes32 commitHash = keccak256(abi.encode("some string"));
+        raffle.closeLottery(1, commitHash);
+        raffle.drawFinalNumberAndMakeLotteryClaimable(1, "some string", true);
         vm.stopPrank();
         // claim the winning ticket
         vm.startPrank(USER, USER);

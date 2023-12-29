@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.20;
+pragma solidity 0.8.23;
 
 interface IBRRRaffle {
     /**
@@ -24,7 +24,7 @@ interface IBRRRaffle {
      * @param _lotteryId: lottery id
      * @dev Callable by operator
      */
-    function closeLottery(uint256 _lotteryId) external;
+    function closeLottery(uint256 _lotteryId, bytes32 _commitHash) external;
 
     /**
      * @notice Draw the final number, calculate reward in CAKE per group, and make lottery claimable
@@ -32,7 +32,8 @@ interface IBRRRaffle {
      * @param _autoInjection: reinjects funds into next lottery (vs. withdrawing all)
      * @dev Callable by operator
      */
-    function drawFinalNumberAndMakeLotteryClaimable(uint256 _lotteryId, bool _autoInjection) external;
+    function drawFinalNumberAndMakeLotteryClaimable(uint256 _lotteryId, string memory _commit, bool _autoInjection)
+        external;
 
     /**
      * @notice Inject funds
