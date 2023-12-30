@@ -28,15 +28,18 @@ contract RewardMinter is ERC1155 {
         rewardValidator = IRewardValidator(_rewardValidator);
     }
 
-    function mint(address _account, uint8 _tokenId, bytes memory data) public {
-        if (!rewardValidator.whitelist(_account, _tokenId)) {
+    /// @notice Checks if a user is whitelisted for a given token ID
+    /// @param _tokenId The Token ID to claim
+    /// @dev Only 1 claim per user
+    function mint(uint8 _tokenId) public {
+        if (!rewardValidator.whitelist(msg.sender, _tokenId)) {
             revert RewardMinter_NotWhitelisted();
         }
-        if (hasClaimed[_account][_tokenId]) {
+        if (hasClaimed[msg.sender][_tokenId]) {
             revert RewardMinter_AlreadyClaimed();
         }
-        hasClaimed[_account][_tokenId] = true;
-        _mint(_account, _tokenId, 1, data);
+        hasClaimed[msg.sender][_tokenId] = true;
+        _mint(msg.sender, _tokenId, 1, "");
     }
 
     function uri(uint256 _tokenId) public pure override returns (string memory) {
