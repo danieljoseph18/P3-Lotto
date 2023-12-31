@@ -9,4 +9,14 @@ library Types {
         uint256 minUpdateTime;
         bytes32 commitHash;
     }
+
+    struct RewardsEarned {
+        uint8 tickets;
+        uint16 xpEarned;
+    }
+
+    struct Prize {
+        uint8 ticketReward;
+        uint16 xpReward;
+    }
 }

@@ -3,35 +3,27 @@ pragma solidity 0.8.23;
 
 import {IRewardValidator} from "./interfaces/IRewardValidator.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Types} from "./libraries/Types.sol";
 
 contract RewardValidator is IRewardValidator, Ownable {
     error RewardValidator_AlreadyWhitelisted();
     error RewardValidator_CallerIsNotRaffle();
     error RewardValidator_PrizesNotSet();
+    error RewardValidator_AlreadyInitialised();
+    error RewardValidator_UnmatchedLengths();
+    error RewardValidator_InvalidTokenId();
 
-    struct RewardsEarned {
-        uint8 tickets;
-        uint16 xpEarned;
-    }
+    mapping(address _user => Types.RewardsEarned _rewards) public userRewards;
 
-    struct Prize {
-        uint8 ticketReward;
-        uint16 xpReward;
-    }
-
-    mapping(address _user => RewardsEarned _rewards) public userRewards;
-
-    mapping(uint8 _tokenId => Prize _prize) public prizeForTokenId;
+    mapping(uint8 _tokenId => Types.Prize _prize) public prizeForTokenId;
 
     mapping(address _user => mapping(uint8 _tokenId => bool _isWhitelsited)) public whitelist;
 
     address public brrRaffle;
     bool private prizesSet;
+    bool private isInitialised;
 
-    constructor(address _brrRaffle) Ownable(msg.sender) {
-        brrRaffle = _brrRaffle;
-        prizesSet = false;
-    }
+    constructor() Ownable(msg.sender) {}
 
     modifier onlyRaffle() {
         if (msg.sender != brrRaffle) revert RewardValidator_CallerIsNotRaffle();
@@ -41,6 +33,13 @@ contract RewardValidator is IRewardValidator, Ownable {
     modifier hasSetPrizes() {
         if (!prizesSet) revert RewardValidator_PrizesNotSet();
         _;
+    }
+
+    function initialise(address _brrRaffle) external onlyOwner {
+        if (isInitialised) revert RewardValidator_AlreadyInitialised();
+        isInitialised = true;
+        brrRaffle = _brrRaffle;
+        prizesSet = false;
     }
 
     /**
@@ -83,12 +82,15 @@ contract RewardValidator is IRewardValidator, Ownable {
      * @param _tokenIds Array of token IDs for which prizes are being set.
      * @param _prizes Array of prizes corresponding to the token IDs.
      */
-    function setPrizes(uint8[] calldata _tokenIds, Prize[] calldata _prizes) external onlyOwner {
+    function setPrizes(uint8[] calldata _tokenIds, Types.Prize[] calldata _prizes) external onlyOwner {
+        if (_tokenIds.length != _prizes.length) revert RewardValidator_UnmatchedLengths();
         for (uint256 i = 0; i < _tokenIds.length;) {
+            if (_tokenIds[i] > 9) revert RewardValidator_InvalidTokenId();
             prizeForTokenId[_tokenIds[i]] = _prizes[i];
             unchecked {
                 ++i;
             }
         }
+        prizesSet = true;
     }
 }

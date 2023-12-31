@@ -27,6 +27,7 @@ contract TestBRRRaffle is Test {
     uint256[] idArray;
     address[] addressArray;
     uint8[] numTicketList;
+    address[] whitelistArray;
 
     function setUp() public {
         DeployRaffle deployRaffle = new DeployRaffle();
@@ -44,6 +45,18 @@ contract TestBRRRaffle is Test {
         usdc.mintTokens(LARGE_AMOUNT);
         usdc.approve(address(raffle), LARGE_AMOUNT);
         raffle.injectFunds(1, 1000e6);
+        whitelistArray.push(USER);
+        whitelistArray.push(OWNER);
+        rewardValidator.addUsersToWhitelist(whitelistArray, 0);
+        rewardValidator.addUsersToWhitelist(whitelistArray, 1);
+        rewardValidator.addUsersToWhitelist(whitelistArray, 2);
+        rewardValidator.addUsersToWhitelist(whitelistArray, 3);
+        rewardValidator.addUsersToWhitelist(whitelistArray, 4);
+        rewardValidator.addUsersToWhitelist(whitelistArray, 5);
+        rewardValidator.addUsersToWhitelist(whitelistArray, 6);
+        rewardValidator.addUsersToWhitelist(whitelistArray, 7);
+        rewardValidator.addUsersToWhitelist(whitelistArray, 8);
+        rewardValidator.addUsersToWhitelist(whitelistArray, 9);
         vm.stopPrank();
         vm.prank(USER);
         usdc.mintTokens(LARGE_AMOUNT);
@@ -165,7 +178,7 @@ contract TestBRRRaffle is Test {
         // buy the winning ticket
         vm.startPrank(USER, USER);
         usdc.approve(address(raffle), LARGE_AMOUNT);
-        ticketNumbers.push(1336105);
+        ticketNumbers.push(1667735);
         raffle.buyTickets(1, ticketNumbers);
         vm.stopPrank();
         // complete the lottery
@@ -269,7 +282,8 @@ contract TestBRRRaffle is Test {
     function testClaimFreeTicketsRevertsFromNonWhitelistedUsers() public startAndInjectFunds {
         ticketNumbers.push(1e6 + 69);
         ticketNumbers.push(1e6);
-        vm.startPrank(USER, USER);
+        address NOT_WHITELISTED = makeAddr("notWhitelisted");
+        vm.startPrank(NOT_WHITELISTED, NOT_WHITELISTED);
         vm.expectRevert();
         raffle.claimFreeTickets(1, ticketNumbers);
         vm.stopPrank();
@@ -278,8 +292,7 @@ contract TestBRRRaffle is Test {
     function testClaimFreeTicketsWorksWhenOwnerWhitelistsAddress() public startAndInjectFunds {
         addressArray.push(USER);
         numTicketList.push(2);
-        vm.prank(OWNER);
-        rewardValidator.addClaimableTickets(addressArray, numTicketList);
+
         ticketNumbers.push(1e6 + 69);
         ticketNumbers.push(1e6);
         vm.startPrank(USER, USER);
@@ -290,10 +303,9 @@ contract TestBRRRaffle is Test {
     function testFreeTicketsAreUsableInLiveLotteries() public startAndInjectFunds {
         addressArray.push(USER);
         numTicketList.push(2);
-        vm.prank(OWNER);
-        rewardValidator.addClaimableTickets(addressArray, numTicketList);
+
         ticketNumbers.push(1e6 + 69);
-        ticketNumbers.push(1336105);
+        ticketNumbers.push(1667735);
         vm.prank(USER, USER);
         raffle.claimFreeTickets(1, ticketNumbers);
 
@@ -358,8 +370,7 @@ contract TestBRRRaffle is Test {
     function testClaimingFreeTicketsForClosedLotteriesFails() public startAndInjectFunds {
         addressArray.push(USER);
         numTicketList.push(2);
-        vm.prank(OWNER);
-        rewardValidator.addClaimableTickets(addressArray, numTicketList);
+
         ticketNumbers.push(1e6 + 69);
         ticketNumbers.push(1e6);
         vm.prank(USER, USER);
@@ -370,8 +381,7 @@ contract TestBRRRaffle is Test {
     function testUsersCantClaimFreeTicketsWithInvalidTicketNumbers() public startAndInjectFunds {
         addressArray.push(USER);
         numTicketList.push(2);
-        vm.prank(OWNER);
-        rewardValidator.addClaimableTickets(addressArray, numTicketList);
+
         ticketNumbers.push(1e6 + 69);
         ticketNumbers.push(2e6);
         vm.prank(USER, USER);
@@ -741,7 +751,7 @@ contract TestBRRRaffle is Test {
         // buy some tickets
         vm.startPrank(USER, USER);
         usdc.approve(address(raffle), LARGE_AMOUNT);
-        ticketNumbers.push(1336105);
+        ticketNumbers.push(1667735);
 
         raffle.buyTickets(1, ticketNumbers);
         vm.stopPrank();
@@ -773,7 +783,7 @@ contract TestBRRRaffle is Test {
         // buy some tickets
         vm.startPrank(USER, USER);
         usdc.approve(address(raffle), LARGE_AMOUNT);
-        ticketNumbers.push(1336105);
+        ticketNumbers.push(1667735);
 
         raffle.buyTickets(1, ticketNumbers);
         vm.stopPrank();

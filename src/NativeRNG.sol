@@ -3,11 +3,11 @@ pragma solidity 0.8.23;
 
 import {INativeRNG} from "./interfaces/INativeRNG.sol";
 import {Types} from "./libraries/Types.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-// Contract to natively generate a pseudo-random number
-// Required as Chainlink VRF not supported on Base
-
-contract NativeRNG is INativeRNG {
+/// @notice Contract to natively generate a pseudo-random number
+/// @dev  Required as Chainlink VRF not supported on Base
+contract NativeRNG is INativeRNG, Ownable {
     error NativeRNG_InvalidSeed();
     error NativeRNG_CallerIsNotRaffle();
     error NativeRNG_PrevRandomnessNotFulfilled();
@@ -31,7 +31,7 @@ contract NativeRNG is INativeRNG {
 
     uint32 public lastRandomNumber;
 
-    constructor() {
+    constructor() Ownable(msg.sender) {
         // Fulfill the 0 request
         requests[0] =
             Types.Request({fulfilled: true, exists: true, randomResult: 0, minUpdateTime: 0, commitHash: bytes32(0)});
@@ -48,7 +48,7 @@ contract NativeRNG is INativeRNG {
      * @param _brrRaffle The address of the BRR Raffle contract.
      * @dev This function can only be called once, and the provided address must not be the zero address.
      */
-    function initialise(address _brrRaffle) external {
+    function initialise(address _brrRaffle) external onlyOwner {
         if (brrRaffle != address(0)) revert NativeRNG_AlreadyInitialised();
         if (_brrRaffle == address(0)) revert NativeRNG_ZeroAddress();
         brrRaffle = _brrRaffle;
