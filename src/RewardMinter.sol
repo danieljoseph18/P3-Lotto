@@ -8,19 +8,20 @@ import {IRewardValidator} from "./interfaces/IRewardValidator.sol";
 contract RewardMinter is ERC1155 {
     error RewardMinter_AlreadyClaimed();
     error RewardMinter_NotWhitelisted();
+    error RewardMinter_InvalidTokenId();
 
     IRewardValidator public rewardValidator;
 
-    uint256 public constant REWARD1 = 0;
-    uint256 public constant REWARD2 = 1;
-    uint256 public constant REWARD3 = 2;
-    uint256 public constant REWARD4 = 3;
-    uint256 public constant REWARD5 = 4;
-    uint256 public constant REWARD6 = 5;
-    uint256 public constant REWARD7 = 6;
-    uint256 public constant REWARD8 = 7;
-    uint256 public constant REWARD9 = 8;
-    uint256 public constant REWARD10 = 9;
+    uint256 public constant LAUNCHER = 0;
+    uint256 public constant BRIDGER = 1;
+    uint256 public constant PRINT3R = 2;
+    uint256 public constant MEMER = 3;
+    uint256 public constant QUIZZER = 4;
+    uint256 public constant BSCNER = 5;
+    uint256 public constant NORMIEER = 6;
+    uint256 public constant EARLYBIRDER = 7;
+    uint256 public constant AIRDROPPER = 8;
+    uint256 public constant PROFITER = 9;
 
     mapping(address _user => mapping(uint256 _tokenId => bool _hasClaimed)) public hasClaimed;
 
@@ -28,10 +29,16 @@ contract RewardMinter is ERC1155 {
         rewardValidator = IRewardValidator(_rewardValidator);
     }
 
-    /// @notice Checks if a user is whitelisted for a given token ID
-    /// @param _tokenId The Token ID to claim
-    /// @dev Only 1 claim per user
+    /**
+     * @notice Function to mint a reward for a given user.
+     * @param _tokenId The Token ID to claim
+     * @dev Checks if a user is whitelisted for a given token ID.
+     * Only 1 claim per user
+     */
     function mint(uint8 _tokenId) public {
+        if (_tokenId > 9) {
+            revert RewardMinter_InvalidTokenId();
+        }
         if (!rewardValidator.whitelist(msg.sender, _tokenId)) {
             revert RewardMinter_NotWhitelisted();
         }
@@ -42,10 +49,21 @@ contract RewardMinter is ERC1155 {
         _mint(msg.sender, _tokenId, 1, "");
     }
 
+    /**
+     * @notice Returns the URI for a given token ID.
+     * @param _tokenId The ID of the token.
+     * @return The token URI.
+     * @dev Token metadata is expected to follow the ERC1155 metadata URI JSON schema.
+     */
     function uri(uint256 _tokenId) public pure override returns (string memory) {
         return string(abi.encodePacked("", Strings.toString(_tokenId), ".json"));
     }
 
+    /**
+     * @notice Returns the URI for the contract metadata.
+     * @return The contract URI.
+     * @dev Contract metadata should follow the OpenSea metadata standards.
+     */
     function contractURI() public pure returns (string memory) {
         return "";
     }

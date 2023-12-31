@@ -254,6 +254,12 @@ contract BRRRaffle is ReentrancyGuard, IBRRRaffle, Ownable {
         emit TicketsClaim(msg.sender, rewardInUsdcToTransfer, _lotteryId, _ticketIds.length);
     }
 
+    /**
+     * @notice Claim all the claimable tickets of multiple users for multiple lotteries
+     * @param _lotteryId: The Lottery ID to claim from
+     * @param _ticketNumbers: Array of ticket numbers to claim
+     * @dev Callable by owner or injector only
+     */
     function claimFreeTickets(uint256 _lotteryId, uint32[] memory _ticketNumbers) external nonReentrant notContract {
         // checks the lottery is open
         if (_lotteries[_lotteryId].status != Status.Open) revert BRRRaffle_LotteryNotOpen();
