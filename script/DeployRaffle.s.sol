@@ -6,6 +6,7 @@ import {HelperConfig} from "./HelperConfig.s.sol";
 import {BRRRaffle} from "../src/BRRRaffle.sol";
 import {NativeRNG} from "../src/NativeRNG.sol";
 import {RewardValidator} from "../src/RewardValidator.sol";
+import {RewardMinter} from "../src/RewardMinter.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Types} from "../src/libraries/Types.sol";
 
@@ -16,6 +17,7 @@ contract DeployRaffle is Script {
         address usdc;
         BRRRaffle raffle;
         RewardValidator rewardValidator;
+        RewardMinter rewardMinter;
         NativeRNG rng;
         address owner;
     }
@@ -35,6 +37,7 @@ contract DeployRaffle is Script {
         contracts.owner = msg.sender;
         contracts.rng = new NativeRNG();
         contracts.rewardValidator = new RewardValidator();
+        contracts.rewardMinter = new RewardMinter(address(contracts.rewardValidator));
         contracts.raffle = new BRRRaffle(contracts.usdc, address(contracts.rng), address(contracts.rewardValidator));
         contracts.rng.initialise(address(contracts.raffle));
         contracts.raffle.setOperatorAndTreasuryAndInjectorAddresses(msg.sender, msg.sender, msg.sender);

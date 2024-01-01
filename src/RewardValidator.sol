@@ -64,6 +64,7 @@ contract RewardValidator is IRewardValidator, Ownable {
      * @dev Can't use a merkle tree as a result of requirement to track spending
      */
     function addUsersToWhitelist(address[] calldata _whitelist, uint8 _tokenId) external onlyOwner hasSetPrizes {
+        if (_tokenId > 9) revert RewardValidator_InvalidTokenId();
         for (uint256 i = 0; i < _whitelist.length;) {
             if (whitelist[_whitelist[i]][_tokenId]) {
                 revert RewardValidator_AlreadyWhitelisted();

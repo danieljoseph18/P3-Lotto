@@ -9,7 +9,7 @@ import {RewardValidator} from "../../src/RewardValidator.sol";
 import {MockERC20} from "../mocks/MockERC20.sol";
 import {NativeRNG} from "../../src/NativeRNG.sol";
 
-contract TestBRRRaffle is Test {
+contract TestNativeRNG is Test {
     BRRRaffle public raffle;
     INativeRNG public rng;
     RewardValidator public rewardValidator;
@@ -76,4 +76,47 @@ contract TestBRRRaffle is Test {
     ////////////////////////
     // FULFILL RANDOMNESS //
     ////////////////////////
+
+    function testRandomnessCanOnlyBeFulfilledWithAnEquivalentSeed(string memory seed) external {
+        vm.prank(address(raffle));
+        rng.requestRandomness(keccak256(abi.encode("Random")));
+
+        vm.warp(block.timestamp + 1 hours);
+        vm.roll(block.number + 1);
+
+        vm.prank(address(raffle));
+        vm.expectRevert();
+        rng.generateRandomNumber(1, seed);
+    }
+
+    function testDifferentSeedsProduceDifferentOutputs(string memory str1, string memory str2) external {
+        vm.startPrank(address(raffle));
+        rng.requestRandomness(keccak256(abi.encode(str1)));
+
+        vm.warp(block.timestamp + 1 hours);
+        vm.roll(block.number + 1);
+
+        uint32 r1 = rng.generateRandomNumber(1, str1);
+        rng.requestRandomness(keccak256(abi.encode(str2)));
+
+        vm.warp(block.timestamp + 1 hours);
+        vm.roll(block.number + 1);
+
+        uint32 r2 = rng.generateRandomNumber(2, str2);
+        vm.stopPrank();
+        assertNotEq(r1, r2);
+    }
+
+    function testRandomnessRequiresAMinimumDelay(uint256 time) external {
+        vm.assume(time < 30 minutes);
+        vm.startPrank(address(raffle));
+        rng.requestRandomness(keccak256(abi.encode("Random")));
+
+        vm.warp(block.timestamp + time);
+        vm.roll(block.number + 1);
+
+        vm.expectRevert();
+        rng.generateRandomNumber(1, "Random");
+        vm.stopPrank();
+    }
 }
