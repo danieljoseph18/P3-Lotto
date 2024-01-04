@@ -12,16 +12,15 @@ contract RewardMinter is ERC1155 {
 
     IRewardValidator public rewardValidator;
 
-    uint256 public constant LAUNCHER = 0;
-    uint256 public constant BRIDGER = 1;
-    uint256 public constant PRINT3R = 2;
-    uint256 public constant MEMER = 3;
-    uint256 public constant QUIZZER = 4;
-    uint256 public constant BSCNER = 5;
-    uint256 public constant NORMIEER = 6;
-    uint256 public constant EARLYBIRDER = 7;
-    uint256 public constant AIRDROPPER = 8;
-    uint256 public constant PROFITER = 9;
+    uint256 public constant EARLY_ADOPTER = 0;
+    uint256 public constant LAUNCH = 1;
+    uint256 public constant USER = 2;
+    uint256 public constant LEVEL_UP = 3;
+    uint256 public constant PROFIT = 4;
+    uint256 public constant QUIZ = 5;
+    uint256 public constant MEME = 6;
+    uint256 public constant BSCN = 8;
+    uint256 public constant NORMIE = 9;
 
     mapping(address _user => mapping(uint256 _tokenId => bool _hasClaimed)) public hasClaimed;
 

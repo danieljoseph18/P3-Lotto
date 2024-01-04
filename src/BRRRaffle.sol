@@ -538,6 +538,17 @@ contract BRRRaffle is ReentrancyGuard, IBRRRaffle, Ownable {
     }
 
     /**
+     * @notice Set USDC Address
+     * @dev Only callable by owner before start of any lottery
+     * @param _usdcAddress: address of the USDC token
+     */
+    function setUsdcAddress(address _usdcAddress) external onlyOwner {
+        if (_usdcAddress == address(0)) revert BRRRaffle_ZeroAddress();
+        if (_lotteries[currentLotteryId].status != Status.Pending) revert BRRRaffle_RoundNotFinished();
+        usdc = IERC20(_usdcAddress);
+    }
+
+    /**
      * @notice Calculate price of a set of tickets
      * @param _discountDivisor: divisor for the discount
      * @param _priceTicket price of a ticket (in USDC)
