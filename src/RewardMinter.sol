@@ -14,11 +14,12 @@ contract RewardMinter is ERC1155 {
 
     uint256 public constant EARLY_ADOPTER = 0;
     uint256 public constant LAUNCH = 1;
-    uint256 public constant USER = 2;
-    uint256 public constant LEVEL_UP = 3;
-    uint256 public constant PROFIT = 4;
-    uint256 public constant QUIZ = 5;
-    uint256 public constant MEME = 6;
+    uint256 public constant BRIDGE = 2;
+    uint256 public constant USER = 3;
+    uint256 public constant LEVEL_UP = 4;
+    uint256 public constant PROFIT = 5;
+    uint256 public constant QUIZ = 6;
+    uint256 public constant MEME = 7;
     uint256 public constant BSCN = 8;
     uint256 public constant NORMIE = 9;
 
@@ -34,17 +35,18 @@ contract RewardMinter is ERC1155 {
      * @dev Checks if a user is whitelisted for a given token ID.
      * Only 1 claim per user
      */
-    function mint(uint8 _tokenId) public {
+    function mint(uint8 _tokenId, bytes32[] calldata _merkleProof) public {
         if (_tokenId > 9) {
             revert RewardMinter_InvalidTokenId();
         }
-        if (!rewardValidator.whitelist(msg.sender, _tokenId)) {
+        if (!rewardValidator.verifyWhitelisted(msg.sender, _tokenId, _merkleProof)) {
             revert RewardMinter_NotWhitelisted();
         }
         if (hasClaimed[msg.sender][_tokenId]) {
             revert RewardMinter_AlreadyClaimed();
         }
         hasClaimed[msg.sender][_tokenId] = true;
+        rewardValidator.addUserRewards(msg.sender, _tokenId);
         _mint(msg.sender, _tokenId, 1, "");
     }
 

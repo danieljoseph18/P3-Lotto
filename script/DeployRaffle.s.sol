@@ -41,7 +41,7 @@ contract DeployRaffle is Script {
         contracts.raffle = new BRRRaffle(contracts.usdc, address(contracts.rng), address(contracts.rewardValidator));
         contracts.rng.initialise(address(contracts.raffle));
         contracts.raffle.setOperatorAndTreasuryAndInjectorAddresses(msg.sender, msg.sender, msg.sender);
-        contracts.rewardValidator.initialise(address(contracts.raffle));
+        contracts.rewardValidator.initialise(address(contracts.raffle), address(contracts.rewardMinter));
 
         // set prizes for each token ID
         tokenIdArray = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];

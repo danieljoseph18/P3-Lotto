@@ -4,22 +4,24 @@ pragma solidity 0.8.23;
 import {IRewardValidator} from "./interfaces/IRewardValidator.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Types} from "./libraries/Types.sol";
+import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
 contract RewardValidator is IRewardValidator, Ownable {
     error RewardValidator_AlreadyWhitelisted();
     error RewardValidator_CallerIsNotRaffle();
     error RewardValidator_PrizesNotSet();
     error RewardValidator_AlreadyInitialised();
-    error RewardValidator_UnmatchedLengths();
+    error RewardValidator_InvalidArrayLengths();
     error RewardValidator_InvalidTokenId();
+    error RewardValidator_NotWhitelisted();
+    error RewardValidator_ZeroAddress();
 
-    mapping(address _user => Types.RewardsEarned _rewards) public userRewards;
-
-    mapping(uint8 _tokenId => Types.Prize _prize) public prizeForTokenId;
-
-    mapping(address _user => mapping(uint8 _tokenId => bool _isWhitelsited)) public whitelist;
+    mapping(address => Types.RewardsEarned) public userRewards;
+    mapping(uint8 => Types.Prize) public prizeForTokenId;
+    mapping(uint8 => bytes32) public merkleRoots; // Merkle roots for each token ID
 
     address public brrRaffle;
+    address public rewardMinter;
     bool private prizesSet;
     bool private isInitialised;
 
@@ -35,19 +37,19 @@ contract RewardValidator is IRewardValidator, Ownable {
         _;
     }
 
-    function initialise(address _brrRaffle) external onlyOwner {
+    modifier onlyRewardMinter() {
+        if (msg.sender != brrRaffle) revert RewardValidator_CallerIsNotRaffle();
+        _;
+    }
+
+    function initialise(address _brrRaffle, address _rewardMinter) external onlyOwner {
         if (isInitialised) revert RewardValidator_AlreadyInitialised();
         isInitialised = true;
         brrRaffle = _brrRaffle;
+        rewardMinter = _rewardMinter;
         prizesSet = false;
     }
 
-    /**
-     * @notice Validates and deducts the required number of tickets from a user's balance.
-     * @param _user Address of the user whose tickets are being validated.
-     * @param _numTickets Number of tickets to validate.
-     * @return True if the user has enough tickets; otherwise, false.
-     */
     function validateTickets(address _user, uint8 _numTickets) external onlyRaffle hasSetPrizes returns (bool) {
         if (userRewards[_user].tickets >= _numTickets) {
             userRewards[_user].tickets -= _numTickets;
@@ -58,33 +60,33 @@ contract RewardValidator is IRewardValidator, Ownable {
     }
 
     /**
-     * @notice Adds users to the whitelist for a specific token ID and awards them their respective prizes.
-     * @param _whitelist Array of addresses to whitelist.
-     * @param _tokenId Token ID for which users are being whitelisted.
-     * @dev Can't use a merkle tree as a result of requirement to track spending
+     * @notice Sets the Merkle root for a specific token ID.
+     * @param _tokenId The token ID.
+     * @param _merkleRoot The Merkle root for the whitelist of the token ID.
      */
-    function addUsersToWhitelist(address[] calldata _whitelist, uint8 _tokenId) external onlyOwner hasSetPrizes {
-        if (_tokenId > 9) revert RewardValidator_InvalidTokenId();
-        for (uint256 i = 0; i < _whitelist.length;) {
-            if (whitelist[_whitelist[i]][_tokenId]) {
-                revert RewardValidator_AlreadyWhitelisted();
-            }
-            whitelist[_whitelist[i]][_tokenId] = true;
-            userRewards[_whitelist[i]].tickets += prizeForTokenId[_tokenId].ticketReward;
-            userRewards[_whitelist[i]].xpEarned += prizeForTokenId[_tokenId].xpReward;
-            unchecked {
-                ++i;
-            }
-        }
+    function setMerkleRoot(uint8 _tokenId, bytes32 _merkleRoot) external onlyOwner {
+        merkleRoots[_tokenId] = _merkleRoot;
     }
 
     /**
-     * @notice Sets prizes for given token IDs.
-     * @param _tokenIds Array of token IDs for which prizes are being set.
-     * @param _prizes Array of prizes corresponding to the token IDs.
+     * @notice Verifies if an address is part of the Merkle Tree whitelist for a specific token ID.
+     * @param _user The user address.
+     * @param _tokenId The token ID.
+     * @param _merkleProof Merkle proof to verify inclusion in the whitelist.
      */
+    function verifyWhitelisted(address _user, uint8 _tokenId, bytes32[] calldata _merkleProof)
+        external
+        view
+        returns (bool)
+    {
+        if (_tokenId > 9) revert RewardValidator_InvalidTokenId();
+        bytes32 leaf = keccak256(abi.encodePacked(_user));
+        return MerkleProof.verify(_merkleProof, merkleRoots[_tokenId], leaf);
+    }
+
     function setPrizes(uint8[] calldata _tokenIds, Types.Prize[] calldata _prizes) external onlyOwner {
-        if (_tokenIds.length != _prizes.length) revert RewardValidator_UnmatchedLengths();
+        if (_tokenIds.length != _prizes.length) revert RewardValidator_InvalidArrayLengths();
+        if (_tokenIds.length != 10) revert RewardValidator_InvalidArrayLengths();
         for (uint256 i = 0; i < _tokenIds.length;) {
             if (_tokenIds[i] > 9) revert RewardValidator_InvalidTokenId();
             prizeForTokenId[_tokenIds[i]] = _prizes[i];
@@ -93,5 +95,13 @@ contract RewardValidator is IRewardValidator, Ownable {
             }
         }
         prizesSet = true;
+    }
+
+    function addUserRewards(address _user, uint8 _tokenId) external onlyRewardMinter {
+        if (_tokenId > 9) revert RewardValidator_InvalidTokenId();
+        if (_user == address(0)) revert RewardValidator_ZeroAddress();
+        Types.Prize memory prize = prizeForTokenId[_tokenId];
+        userRewards[_user].tickets += prize.ticketReward;
+        userRewards[_user].xpEarned += prize.xpReward;
     }
 }
