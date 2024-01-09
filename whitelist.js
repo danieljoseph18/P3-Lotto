@@ -1,17 +1,25 @@
 const { MerkleTree } = require('merkletreejs');
 const keccak256 = require('keccak256');
 
+/**
+ * 
+ *  0x7FA9385bE102ac3EAc297483Dd6233D62b3e1496
+0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D
+ */
+
 const whitelists = {
-    0: [],
-    1: [],
-    2: [],
-    3: [],
-    4: [],
-    5: [],
-    6: [],
-    7: [],
-    8: [],
-    9: []
+    0: ["0x7FA9385bE102ac3EAc297483Dd6233D62b3e1496", "0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D"],
+    1: ["0x7FA9385bE102ac3EAc297483Dd6233D62b3e1496", "0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D"],
+    2: ["0x7FA9385bE102ac3EAc297483Dd6233D62b3e1496", "0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D"],
+    3: ["0x7FA9385bE102ac3EAc297483Dd6233D62b3e1496", "0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D"],
+    4: ["0x7FA9385bE102ac3EAc297483Dd6233D62b3e1496", "0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D"],
+    5: ["0x7FA9385bE102ac3EAc297483Dd6233D62b3e1496", "0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D"],
+    6: ["0x7FA9385bE102ac3EAc297483Dd6233D62b3e1496", "0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D"],
+    7: ["0x7FA9385bE102ac3EAc297483Dd6233D62b3e1496", "0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D"],
+    8: ["0x7FA9385bE102ac3EAc297483Dd6233D62b3e1496", "0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D"],
+    9: ["0x7FA9385bE102ac3EAc297483Dd6233D62b3e1496", "0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D"],
+    10: ["0x7FA9385bE102ac3EAc297483Dd6233D62b3e1496", "0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D"],
+    11: ["0x7FA9385bE102ac3EAc297483Dd6233D62b3e1496", "0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D"]
 }
 
 // Function to create a Merkle Tree and get its root
@@ -23,7 +31,7 @@ function createMerkleTree(addresses) {
 
 // Creating Merkle trees for each token ID and storing their roots
 const merkleRoots = {};
-for (let tokenId = 0; tokenId <= 9; tokenId++) {
+for (let tokenId = 0; tokenId <= 11; tokenId++) {
     const merkleTree = createMerkleTree(whitelists[tokenId] || []);
     merkleRoots[tokenId] = merkleTree.getHexRoot();
 }
@@ -38,5 +46,14 @@ function generateProof(address, tokenId) {
 
 // Example usage
 const tokenId = 0; // Token ID for which you want to generate the proof
-const addressToProve = "0xAddressToProve";
-const proof = generateProof(addressToProve, tokenId);
+const addressToProve1 = "0x7FA9385bE102ac3EAc297483Dd6233D62b3e1496";
+const addressToProve2 = "0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D";
+// const proof = generateProof(addressToProve1, tokenId);
+
+// Set Up 1
+for(let i = 0; i < 12; i++) {
+    console.log(i);
+    console.log(`Merkle Root ${i}: `, merkleRoots[i]);
+    console.log(`Proof For Address 1 Token ID ${i}: `, generateProof(addressToProve1, i));
+    console.log(`Proof For Address 2 Token ID ${i}: `, generateProof(addressToProve2, i));
+}

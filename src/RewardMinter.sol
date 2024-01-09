@@ -6,26 +6,35 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IRewardValidator} from "./interfaces/IRewardValidator.sol";
 
 contract RewardMinter is ERC1155 {
-    error RewardMinter_AlreadyClaimed();
-    error RewardMinter_NotWhitelisted();
-    error RewardMinter_InvalidTokenId();
-
-    IRewardValidator public rewardValidator;
-
-    uint256 public constant EARLY_ADOPTER = 0;
-    uint256 public constant LAUNCH = 1;
-    uint256 public constant BRIDGE = 2;
-    uint256 public constant USER = 3;
-    uint256 public constant LEVEL_UP = 4;
-    uint256 public constant PROFIT = 5;
-    uint256 public constant QUIZ = 6;
-    uint256 public constant MEME = 7;
-    uint256 public constant BSCN = 8;
-    uint256 public constant NORMIE = 9;
+    IRewardValidator rewardValidator;
+    // Earned by using PRINT3R Mainnet
+    uint256 constant EARLY_ADOPTER = 0;
+    // Earned by completing Launch Task
+    uint256 constant LAUNCH = 1;
+    // Earned by bridging to Base using LiFi
+    uint256 constant BRIDGE = 2;
+    // Earned by having participated in Goblin Mode / Beta Testnet
+    uint256 constant OG_GOBLIN = 3;
+    // Earned by leveling up to > 5
+    uint256 constant LEVEL_UP = 4;
+    // Earned by coming Top 50 in the Profit Leaderboard
+    uint256 constant TOP_TRADER = 5;
+    // Earned by Scoring 100% in a Quiz
+    uint256 constant QUIZ_MASTER = 6;
+    // Earned by Participating in the Meme Competition
+    uint256 constant MEME_LEGEND = 7;
+    // Earned by completing the Social Task ft BSCN
+    uint256 constant BSCN = 8;
+    // Earned by completing the Social Task ft Normie
+    uint256 constant NORMIE_CAPITAL = 9;
+    // Earned by completing task ft BNS
+    uint256 constant BNS = 10;
+    // Earned by completing task ft DAPDAP
+    uint256 constant DAPDAP = 11;
 
     mapping(address _user => mapping(uint256 _tokenId => bool _hasClaimed)) public hasClaimed;
 
-    constructor(address _rewardValidator) ERC1155("") {
+    constructor(address _rewardValidator, string memory _baseUri) ERC1155(_baseUri) {
         rewardValidator = IRewardValidator(_rewardValidator);
     }
 
@@ -36,15 +45,9 @@ contract RewardMinter is ERC1155 {
      * Only 1 claim per user
      */
     function mint(uint8 _tokenId, bytes32[] calldata _merkleProof) public {
-        if (_tokenId > 9) {
-            revert RewardMinter_InvalidTokenId();
-        }
-        if (!rewardValidator.verifyWhitelisted(msg.sender, _tokenId, _merkleProof)) {
-            revert RewardMinter_NotWhitelisted();
-        }
-        if (hasClaimed[msg.sender][_tokenId]) {
-            revert RewardMinter_AlreadyClaimed();
-        }
+        require(_tokenId <= DAPDAP, "RM: Invalid Token ID");
+        require(rewardValidator.verifyWhitelisted(msg.sender, _tokenId, _merkleProof), "RM: Not Whitelisted");
+        require(!hasClaimed[msg.sender][_tokenId], "RM: Already Claimed");
         hasClaimed[msg.sender][_tokenId] = true;
         rewardValidator.addUserRewards(msg.sender, _tokenId);
         _mint(msg.sender, _tokenId, 1, "");
@@ -56,16 +59,7 @@ contract RewardMinter is ERC1155 {
      * @return The token URI.
      * @dev Token metadata is expected to follow the ERC1155 metadata URI JSON schema.
      */
-    function uri(uint256 _tokenId) public pure override returns (string memory) {
-        return string(abi.encodePacked("", Strings.toString(_tokenId), ".json"));
-    }
-
-    /**
-     * @notice Returns the URI for the contract metadata.
-     * @return The contract URI.
-     * @dev Contract metadata should follow the OpenSea metadata standards.
-     */
-    function contractURI() public pure returns (string memory) {
-        return "";
+    function uri(uint256 _tokenId) public view override returns (string memory) {
+        return string(abi.encodePacked(super.uri(_tokenId), Strings.toString(_tokenId), ".json"));
     }
 }

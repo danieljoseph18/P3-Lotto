@@ -37,17 +37,41 @@ contract DeployRaffle is Script {
         contracts.owner = msg.sender;
         contracts.rng = new NativeRNG();
         contracts.rewardValidator = new RewardValidator();
-        contracts.rewardMinter = new RewardMinter(address(contracts.rewardValidator));
+        contracts.rewardMinter = new RewardMinter(
+            address(contracts.rewardValidator), "ipfs://QmeKbFawVTgTDbX3UtoSAuWHrKHygVoMovivG4WAzTNMsC/"
+        );
         contracts.raffle = new BRRRaffle(contracts.usdc, address(contracts.rng), address(contracts.rewardValidator));
         contracts.rng.initialise(address(contracts.raffle));
         contracts.raffle.setOperatorAndTreasuryAndInjectorAddresses(msg.sender, msg.sender, msg.sender);
         contracts.rewardValidator.initialise(address(contracts.raffle), address(contracts.rewardMinter));
 
         // set prizes for each token ID
-        tokenIdArray = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-        for (uint8 i = 0; i < tokenIdArray.length; i++) {
-            prizeArray.push(Types.Prize({ticketReward: 1, xpReward: 500}));
-        }
+        tokenIdArray = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+        // Early Adopter
+        prizeArray.push(Types.Prize({ticketReward: 1, xpReward: 250}));
+        // Launch
+        prizeArray.push(Types.Prize({ticketReward: 1, xpReward: 250}));
+        // Bridge
+        prizeArray.push(Types.Prize({ticketReward: 2, xpReward: 500}));
+        // OG Goblin
+        prizeArray.push(Types.Prize({ticketReward: 3, xpReward: 750}));
+        // Level Up
+        prizeArray.push(Types.Prize({ticketReward: 3, xpReward: 750}));
+        // Top Trader
+        prizeArray.push(Types.Prize({ticketReward: 2, xpReward: 500}));
+        // Quiz Master
+        prizeArray.push(Types.Prize({ticketReward: 1, xpReward: 250}));
+        // Meme Legend
+        prizeArray.push(Types.Prize({ticketReward: 1, xpReward: 250}));
+        // BSCN
+        prizeArray.push(Types.Prize({ticketReward: 1, xpReward: 250}));
+        // Normie Capital
+        prizeArray.push(Types.Prize({ticketReward: 1, xpReward: 250}));
+        // BNS
+        prizeArray.push(Types.Prize({ticketReward: 2, xpReward: 500}));
+        // DAPDAP
+        prizeArray.push(Types.Prize({ticketReward: 1, xpReward: 250}));
+
         contracts.rewardValidator.setPrizes(tokenIdArray, prizeArray);
         // transfer ownership to contracts.owner
         contracts.raffle.transferOwnership(contracts.owner);

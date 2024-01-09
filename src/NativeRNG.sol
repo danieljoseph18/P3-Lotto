@@ -8,17 +8,6 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 /// @notice Contract to natively generate a pseudo-random number
 /// @dev  Required as Chainlink VRF not supported on Base
 contract NativeRNG is INativeRNG, Ownable {
-    error NativeRNG_InvalidSeed();
-    error NativeRNG_CallerIsNotRaffle();
-    error NativeRNG_PrevRandomnessNotFulfilled();
-    error NativeRNG_RandomnessAlreadyFulfilled();
-    error NativeRNG_MinDelayNotMet();
-    error NativeRNG_InvalidRandomNumber();
-    error NativeRNG_InvalidCommitHash();
-    error NativeRNG_AlreadyInitialised();
-    error NativeRNG_ZeroAddress();
-    error NativeRNG_RequestDoesNotExist();
-
     event RequestRandomness(uint256 indexed requestId, bytes32 indexed commitHash);
 
     uint256 public constant UPDATE_DELAY = 30 minutes;
@@ -39,7 +28,7 @@ contract NativeRNG is INativeRNG, Ownable {
     }
 
     modifier onlyRaffle() {
-        if (msg.sender != brrRaffle) revert NativeRNG_CallerIsNotRaffle();
+        require(msg.sender == brrRaffle, "NRNG: Caller is not Raffle");
         _;
     }
 
@@ -49,8 +38,8 @@ contract NativeRNG is INativeRNG, Ownable {
      * @dev This function can only be called once, and the provided address must not be the zero address.
      */
     function initialise(address _brrRaffle) external onlyOwner {
-        if (brrRaffle != address(0)) revert NativeRNG_AlreadyInitialised();
-        if (_brrRaffle == address(0)) revert NativeRNG_ZeroAddress();
+        require(brrRaffle == address(0), "NRNG: Already Initialised");
+        require(_brrRaffle != address(0), "NRNG: Invalid Raffle Address");
         brrRaffle = _brrRaffle;
     }
 
@@ -61,8 +50,8 @@ contract NativeRNG is INativeRNG, Ownable {
      * Reverts if a previous request is not yet fulfilled or if the commit hash is zero.
      */
     function requestRandomness(bytes32 _commitHash) external onlyRaffle {
-        if (_commitHash == bytes32(0)) revert NativeRNG_InvalidCommitHash();
-        if (!requests[lastRequestId].fulfilled) revert NativeRNG_PrevRandomnessNotFulfilled();
+        require(_commitHash != bytes32(0), "NRNG: Invalid Commit Hash");
+        require(requests[lastRequestId].fulfilled, "NRNG: Prev Request Not Fulfilled");
         lastRequestId++;
         requests[lastRequestId] = Types.Request({
             fulfilled: false,
@@ -87,12 +76,10 @@ contract NativeRNG is INativeRNG, Ownable {
      */
     function generateRandomNumber(uint256 _requestId, string memory _seed) external onlyRaffle returns (uint32) {
         Types.Request memory request = requests[_requestId];
-        if (!request.exists) revert NativeRNG_RequestDoesNotExist();
-        if (request.commitHash != keccak256(abi.encode(_seed))) {
-            revert NativeRNG_InvalidSeed();
-        }
-        if (request.fulfilled) revert NativeRNG_RandomnessAlreadyFulfilled();
-        if (block.timestamp < request.minUpdateTime) revert NativeRNG_MinDelayNotMet();
+        require(request.exists, "NRNG: Request Does Not Exist");
+        require(request.commitHash == keccak256(abi.encode(_seed)), "NRNG: Invalid Seed");
+        require(!request.fulfilled, "NRNG: Already Fulfilled");
+        require(block.timestamp >= request.minUpdateTime, "NRNG: Delay");
         uint256 randomResult = uint256(
             keccak256(
                 abi.encode(
@@ -109,9 +96,7 @@ contract NativeRNG is INativeRNG, Ownable {
             )
         );
         lastRandomNumber = uint32(1000000 + (randomResult % 1000000));
-        if (lastRandomNumber < 1000000 || lastRandomNumber > 1999999) {
-            revert NativeRNG_InvalidRandomNumber();
-        }
+        require(lastRandomNumber >= 1000000 && lastRandomNumber <= 1999999, "NRNG: Invalid Random Number");
 
         requests[_requestId].fulfilled = true;
         requests[_requestId].randomResult = lastRandomNumber;

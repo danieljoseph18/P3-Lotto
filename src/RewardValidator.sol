@@ -7,18 +7,11 @@ import {Types} from "./libraries/Types.sol";
 import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
 contract RewardValidator is IRewardValidator, Ownable {
-    error RewardValidator_AlreadyWhitelisted();
-    error RewardValidator_CallerIsNotRaffle();
-    error RewardValidator_PrizesNotSet();
-    error RewardValidator_AlreadyInitialised();
-    error RewardValidator_InvalidArrayLengths();
-    error RewardValidator_InvalidTokenId();
-    error RewardValidator_NotWhitelisted();
-    error RewardValidator_ZeroAddress();
-
     mapping(address => Types.RewardsEarned) public userRewards;
     mapping(uint8 => Types.Prize) public prizeForTokenId;
     mapping(uint8 => bytes32) public merkleRoots; // Merkle roots for each token ID
+
+    uint256 private constant MAX_TOKEN_ID = 11;
 
     address public brrRaffle;
     address public rewardMinter;
@@ -28,22 +21,22 @@ contract RewardValidator is IRewardValidator, Ownable {
     constructor() Ownable(msg.sender) {}
 
     modifier onlyRaffle() {
-        if (msg.sender != brrRaffle) revert RewardValidator_CallerIsNotRaffle();
+        require(msg.sender == brrRaffle, "RV: Caller is not Raffle");
         _;
     }
 
     modifier hasSetPrizes() {
-        if (!prizesSet) revert RewardValidator_PrizesNotSet();
+        require(prizesSet, "RV: Prizes not set");
         _;
     }
 
     modifier onlyRewardMinter() {
-        if (msg.sender != brrRaffle) revert RewardValidator_CallerIsNotRaffle();
+        require(msg.sender == rewardMinter, "RV: Caller is not Reward Minter");
         _;
     }
 
     function initialise(address _brrRaffle, address _rewardMinter) external onlyOwner {
-        if (isInitialised) revert RewardValidator_AlreadyInitialised();
+        require(!isInitialised, "RV: Already Initialised");
         isInitialised = true;
         brrRaffle = _brrRaffle;
         rewardMinter = _rewardMinter;
@@ -79,16 +72,16 @@ contract RewardValidator is IRewardValidator, Ownable {
         view
         returns (bool)
     {
-        if (_tokenId > 9) revert RewardValidator_InvalidTokenId();
+        require(_tokenId <= MAX_TOKEN_ID, "RV: Invalid Token ID");
         bytes32 leaf = keccak256(abi.encodePacked(_user));
         return MerkleProof.verify(_merkleProof, merkleRoots[_tokenId], leaf);
     }
 
     function setPrizes(uint8[] calldata _tokenIds, Types.Prize[] calldata _prizes) external onlyOwner {
-        if (_tokenIds.length != _prizes.length) revert RewardValidator_InvalidArrayLengths();
-        if (_tokenIds.length != 10) revert RewardValidator_InvalidArrayLengths();
+        require(_tokenIds.length == _prizes.length, "RV: Invalid Array Lengths");
+        require(_tokenIds.length == MAX_TOKEN_ID + 1, "RV: Invalid Array Lengths");
         for (uint256 i = 0; i < _tokenIds.length;) {
-            if (_tokenIds[i] > 9) revert RewardValidator_InvalidTokenId();
+            require(_tokenIds[i] <= MAX_TOKEN_ID, "RV: Invalid Token ID");
             prizeForTokenId[_tokenIds[i]] = _prizes[i];
             unchecked {
                 ++i;
@@ -98,8 +91,8 @@ contract RewardValidator is IRewardValidator, Ownable {
     }
 
     function addUserRewards(address _user, uint8 _tokenId) external onlyRewardMinter {
-        if (_tokenId > 9) revert RewardValidator_InvalidTokenId();
-        if (_user == address(0)) revert RewardValidator_ZeroAddress();
+        require(_tokenId <= MAX_TOKEN_ID, "RV: Invalid Token ID");
+        require(_user != address(0), "RV: Zero Address");
         Types.Prize memory prize = prizeForTokenId[_tokenId];
         userRewards[_user].tickets += prize.ticketReward;
         userRewards[_user].xpEarned += prize.xpReward;
