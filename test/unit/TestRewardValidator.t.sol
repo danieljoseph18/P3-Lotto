@@ -42,10 +42,43 @@ contract TestRewardValidator is Test {
     }
 
     function testPrizesAreSetCorrectly() external {
-        for (uint8 i = 0; i < 10; ++i) {
-            (uint8 ticketReward, uint16 xpReward) = rewardValidator.prizeForTokenId(i);
-            assertEq(ticketReward, 1);
-            assertEq(xpReward, 500);
-        }
+        uint8 ticketReward;
+        uint16 xpReward;
+        (ticketReward, xpReward) = rewardValidator.prizeForTokenId(0);
+        assertEq(ticketReward, 1);
+        assertEq(xpReward, 250);
+        (ticketReward, xpReward) = rewardValidator.prizeForTokenId(1);
+        assertEq(ticketReward, 1);
+        assertEq(xpReward, 250);
+        (ticketReward, xpReward) = rewardValidator.prizeForTokenId(2);
+        assertEq(ticketReward, 2);
+        assertEq(xpReward, 500);
+        (ticketReward, xpReward) = rewardValidator.prizeForTokenId(3);
+        assertEq(ticketReward, 3);
+        assertEq(xpReward, 750);
+        (ticketReward, xpReward) = rewardValidator.prizeForTokenId(4);
+        assertEq(ticketReward, 3);
+        assertEq(xpReward, 750);
+        (ticketReward, xpReward) = rewardValidator.prizeForTokenId(5);
+        assertEq(ticketReward, 2);
+        assertEq(xpReward, 500);
+        (ticketReward, xpReward) = rewardValidator.prizeForTokenId(6);
+        assertEq(ticketReward, 1);
+        assertEq(xpReward, 250);
+        (ticketReward, xpReward) = rewardValidator.prizeForTokenId(7);
+        assertEq(ticketReward, 1);
+        assertEq(xpReward, 250);
+        (ticketReward, xpReward) = rewardValidator.prizeForTokenId(8);
+        assertEq(ticketReward, 1);
+        assertEq(xpReward, 250);
+        (ticketReward, xpReward) = rewardValidator.prizeForTokenId(9);
+        assertEq(ticketReward, 1);
+        assertEq(xpReward, 250);
+        (ticketReward, xpReward) = rewardValidator.prizeForTokenId(10);
+        assertEq(ticketReward, 2);
+        assertEq(xpReward, 500);
+        (ticketReward, xpReward) = rewardValidator.prizeForTokenId(11);
+        assertEq(ticketReward, 1);
+        assertEq(xpReward, 250);
     }
 }

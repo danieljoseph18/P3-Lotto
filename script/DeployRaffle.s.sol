@@ -38,7 +38,7 @@ contract DeployRaffle is Script {
         contracts.rng = new NativeRNG();
         contracts.rewardValidator = new RewardValidator();
         contracts.rewardMinter = new RewardMinter(
-            address(contracts.rewardValidator), "ipfs://QmeKbFawVTgTDbX3UtoSAuWHrKHygVoMovivG4WAzTNMsC/"
+            address(contracts.rewardValidator), "ipfs://QmSLfoibRqAgWM8GCHrjEn6TQTvL5xpFipq44p8ZXkAuHs/"
         );
         contracts.raffle = new BRRRaffle(contracts.usdc, address(contracts.rng), address(contracts.rewardValidator));
         contracts.rng.initialise(address(contracts.raffle));
