@@ -46,7 +46,7 @@ contract DeployRaffle is Script {
         contracts.rewardValidator.initialise(address(contracts.raffle), address(contracts.rewardMinter));
 
         // set prizes for each token ID
-        tokenIdArray = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+        tokenIdArray = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
         // Early Adopter
         prizeArray.push(Types.Prize({ticketReward: 1, xpReward: 250}));
         // Launch
@@ -71,6 +71,8 @@ contract DeployRaffle is Script {
         prizeArray.push(Types.Prize({ticketReward: 2, xpReward: 500}));
         // DAPDAP
         prizeArray.push(Types.Prize({ticketReward: 1, xpReward: 250}));
+        // Seamless
+        prizeArray.push(Types.Prize({ticketReward: 3, xpReward: 750}));
 
         contracts.rewardValidator.setPrizes(tokenIdArray, prizeArray);
         // transfer ownership to contracts.owner

@@ -66,6 +66,7 @@ contract TestBRRRaffle is Test {
         rewardValidator.setMerkleRoot(9, 0xd50a69f19e3291080d50c37d6c83f1c7594d59aea9f325f696c11b7ab6b8e0d2);
         rewardValidator.setMerkleRoot(10, 0xd50a69f19e3291080d50c37d6c83f1c7594d59aea9f325f696c11b7ab6b8e0d2);
         rewardValidator.setMerkleRoot(11, 0xd50a69f19e3291080d50c37d6c83f1c7594d59aea9f325f696c11b7ab6b8e0d2);
+        rewardValidator.setMerkleRoot(12, 0xd50a69f19e3291080d50c37d6c83f1c7594d59aea9f325f696c11b7ab6b8e0d2);
         vm.stopPrank();
         vm.prank(USER);
         usdc.mintTokens(LARGE_AMOUNT);

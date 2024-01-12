@@ -11,7 +11,7 @@ contract RewardValidator is IRewardValidator, Ownable {
     mapping(uint8 => Types.Prize) public prizeForTokenId;
     mapping(uint8 => bytes32) public merkleRoots; // Merkle roots for each token ID
 
-    uint256 private constant MAX_TOKEN_ID = 11;
+    uint256 private constant MAX_TOKEN_ID = 12;
 
     address public brrRaffle;
     address public rewardMinter;
