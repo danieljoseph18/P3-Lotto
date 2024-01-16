@@ -33,6 +33,8 @@ contract RewardMinter is ERC1155 {
     uint256 constant DAPDAP = 11;
     // Earned by completing task ft Seamless
     uint256 constant SEAMLESS = 12;
+    // Earned by completing task ft Aerodrome
+    uint256 constant AERODROME = 13;
 
     mapping(address _user => mapping(uint256 _tokenId => bool _hasClaimed)) public hasClaimed;
 
@@ -47,7 +49,7 @@ contract RewardMinter is ERC1155 {
      * Only 1 claim per user
      */
     function mint(uint8 _tokenId, bytes32[] calldata _merkleProof) public {
-        require(_tokenId <= SEAMLESS, "RM: Invalid Token ID");
+        require(_tokenId <= AERODROME, "RM: Invalid Token ID");
         require(rewardValidator.verifyWhitelisted(msg.sender, _tokenId, _merkleProof), "RM: Not Whitelisted");
         require(!hasClaimed[msg.sender][_tokenId], "RM: Already Claimed");
         hasClaimed[msg.sender][_tokenId] = true;

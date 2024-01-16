@@ -108,7 +108,7 @@ contract TestNativeRNG is Test {
     }
 
     function testRandomnessRequiresAMinimumDelay(uint256 time) external {
-        vm.assume(time < 30 minutes);
+        vm.assume(time < 10 minutes);
         vm.startPrank(address(raffle));
         rng.requestRandomness(keccak256(abi.encode("Random")));
 

@@ -18,6 +18,7 @@ contract TestRewardMinter is Test {
     MockERC20 public usdc;
 
     uint256 public constant LARGE_AMOUNT = 1e18;
+    uint256 constant MAX_TOKEN_ID = 13;
 
     address public DEFAULT_ANVIL_ADDRESS = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
     address public OWNER;
@@ -59,11 +60,12 @@ contract TestRewardMinter is Test {
         rewardValidator.setMerkleRoot(10, 0xd50a69f19e3291080d50c37d6c83f1c7594d59aea9f325f696c11b7ab6b8e0d2);
         rewardValidator.setMerkleRoot(11, 0xd50a69f19e3291080d50c37d6c83f1c7594d59aea9f325f696c11b7ab6b8e0d2);
         rewardValidator.setMerkleRoot(12, 0xd50a69f19e3291080d50c37d6c83f1c7594d59aea9f325f696c11b7ab6b8e0d2);
+        rewardValidator.setMerkleRoot(13, 0xd50a69f19e3291080d50c37d6c83f1c7594d59aea9f325f696c11b7ab6b8e0d2);
         _;
     }
 
-    function testOnlyTokenIds0To11AreValid(uint8 _tokenId) external {
-        vm.assume(_tokenId > 11);
+    function testOnlyTokenIds0To13AreValid(uint8 _tokenId) external {
+        vm.assume(_tokenId > MAX_TOKEN_ID);
         bytes32[] memory proof = new bytes32[](1);
         proof[0] = 0xa2b193d49eda7315164f046c1fa0491dfcaca76b5f19e62512caa4f531d71c8b;
         vm.prank(USER);
@@ -72,7 +74,7 @@ contract TestRewardMinter is Test {
     }
 
     function testUserCantClaimARewardTwice(uint8 _tokenId) external giveRewards {
-        vm.assume(_tokenId < 12);
+        vm.assume(_tokenId < MAX_TOKEN_ID);
         // claim reward for token id 1
         // claim again and expect revert
         bytes32[] memory proof = new bytes32[](1);
@@ -85,7 +87,7 @@ contract TestRewardMinter is Test {
     }
 
     function testAUserActuallyGetsTheNFTWhenTheyClaim(uint8 _tokenId) external giveRewards {
-        vm.assume(_tokenId < 12);
+        vm.assume(_tokenId < MAX_TOKEN_ID);
         bytes32[] memory proof = new bytes32[](1);
         proof[0] = 0xa2b193d49eda7315164f046c1fa0491dfcaca76b5f19e62512caa4f531d71c8b;
         vm.prank(USER);

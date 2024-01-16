@@ -38,7 +38,7 @@ contract DeployRaffle is Script {
         contracts.rng = new NativeRNG();
         contracts.rewardValidator = new RewardValidator();
         contracts.rewardMinter = new RewardMinter(
-            address(contracts.rewardValidator), "ipfs://QmSLfoibRqAgWM8GCHrjEn6TQTvL5xpFipq44p8ZXkAuHs/"
+            address(contracts.rewardValidator), "ipfs://QmSzw6SegaCHrVcCkFZELR3NFRLk7gvS2PuSyMNptDv44R/"
         );
         contracts.raffle = new BRRRaffle(contracts.usdc, address(contracts.rng), address(contracts.rewardValidator));
         contracts.rng.initialise(address(contracts.raffle));
@@ -46,7 +46,7 @@ contract DeployRaffle is Script {
         contracts.rewardValidator.initialise(address(contracts.raffle), address(contracts.rewardMinter));
 
         // set prizes for each token ID
-        tokenIdArray = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+        tokenIdArray = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
         // Early Adopter
         prizeArray.push(Types.Prize({ticketReward: 1, xpReward: 250}));
         // Launch
@@ -73,6 +73,8 @@ contract DeployRaffle is Script {
         prizeArray.push(Types.Prize({ticketReward: 1, xpReward: 250}));
         // Seamless
         prizeArray.push(Types.Prize({ticketReward: 3, xpReward: 750}));
+        // Aerodrome
+        prizeArray.push(Types.Prize({ticketReward: 2, xpReward: 500}));
 
         contracts.rewardValidator.setPrizes(tokenIdArray, prizeArray);
         // transfer ownership to contracts.owner

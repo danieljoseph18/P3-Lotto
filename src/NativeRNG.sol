@@ -10,7 +10,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 contract NativeRNG is INativeRNG, Ownable {
     event RequestRandomness(uint256 indexed requestId, bytes32 indexed commitHash);
 
-    uint256 public constant UPDATE_DELAY = 30 minutes;
+    uint256 public constant UPDATE_DELAY = 10 minutes;
 
     address public brrRaffle;
 

@@ -19,8 +19,10 @@ contract HelperConfig is Script {
             // Base Goerli
             activeNetworkConfig = getBaseTestnetNetworkConfig();
         } else if (block.chainid == 8453) {
+            // Base Mainnet
             activeNetworkConfig = getBaseMainnetNetworkConfig();
         } else {
+            // Anvil
             activeNetworkConfig = getDefaultNetworkConfig();
         }
     }
