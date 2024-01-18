@@ -22,18 +22,16 @@ contract DeployRaffle is Script {
         address owner;
     }
 
-    uint8[] private tokenIdArray;
     Types.Prize[] private prizeArray;
-    uint256 deployerKey;
 
     function run() external returns (Contracts memory) {
         helperConfig = new HelperConfig();
 
         Contracts memory contracts;
 
-        (contracts.usdc, deployerKey) = helperConfig.activeNetworkConfig();
+        (contracts.usdc,) = helperConfig.activeNetworkConfig();
 
-        vm.startBroadcast(deployerKey);
+        vm.startBroadcast();
         contracts.owner = msg.sender;
         contracts.rng = new NativeRNG();
         contracts.rewardValidator = new RewardValidator();
@@ -45,8 +43,6 @@ contract DeployRaffle is Script {
         contracts.raffle.setOperatorAndTreasuryAndInjectorAddresses(msg.sender, msg.sender, msg.sender);
         contracts.rewardValidator.initialise(address(contracts.raffle), address(contracts.rewardMinter));
 
-        // set prizes for each token ID
-        tokenIdArray = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
         // Early Adopter
         prizeArray.push(Types.Prize({ticketReward: 1, xpReward: 250}));
         // Launch
@@ -58,7 +54,7 @@ contract DeployRaffle is Script {
         // Level Up
         prizeArray.push(Types.Prize({ticketReward: 3, xpReward: 750}));
         // Top Trader
-        prizeArray.push(Types.Prize({ticketReward: 2, xpReward: 500}));
+        prizeArray.push(Types.Prize({ticketReward: 3, xpReward: 750}));
         // Quiz Master
         prizeArray.push(Types.Prize({ticketReward: 1, xpReward: 250}));
         // Meme Legend
@@ -76,7 +72,7 @@ contract DeployRaffle is Script {
         // Aerodrome
         prizeArray.push(Types.Prize({ticketReward: 2, xpReward: 500}));
 
-        contracts.rewardValidator.setPrizes(tokenIdArray, prizeArray);
+        contracts.rewardValidator.setPrizes(prizeArray);
         // transfer ownership to contracts.owner
         contracts.raffle.transferOwnership(contracts.owner);
         contracts.rewardValidator.transferOwnership(contracts.owner);

@@ -76,56 +76,20 @@ contract BRRRaffle is ReentrancyGuard, IBRRRaffle, Ownable {
     mapping(address => mapping(uint256 => uint256[])) private _userTicketIdsPerLotteryId;
 
     modifier notContract() {
-        if (_isContract(msg.sender) || tx.origin != msg.sender) {
-            revert BRRRaffle_InvalidCaller();
-        }
+        require(!_isContract(msg.sender), "Contract not allowed");
+        require(msg.sender == tx.origin, "Proxy contract not allowed");
         _;
     }
 
     modifier onlyOperator() {
-        if (msg.sender != operatorAddress) {
-            revert BRRRaffle_InvalidCaller();
-        }
+        require(msg.sender == operatorAddress, "Not operator");
         _;
     }
 
     modifier onlyOwnerOrInjector() {
-        if (msg.sender != owner() && msg.sender != injectorAddress) {
-            revert BRRRaffle_CallerIsNotOwnerOrInjector();
-        }
+        require((msg.sender == owner()) || (msg.sender == injectorAddress), "Not owner or injector");
         _;
     }
-
-    error BRRRaffle_InvalidCaller();
-    error BRRRaffle_CallerIsNotOwnerOrInjector();
-    error BRRRaffle_NoTicketsSpecified();
-    error BRRRaffle_TicketsExceedMaximum();
-    error BRRRaffle_LotteryNotOpen();
-    error BRRRaffle_LotteryHasFinished();
-    error BRRRaffle_TicketNumberOutOfRange();
-    error BRRRaffle_LengthsUnmatched();
-    error BRRRaffle_EmptyArray();
-    error BRRRaffle_ClaimNotOpen();
-    error BRRRaffle_BracketOutOfRange();
-    error BRRRaffle_TicketIdTooHigh();
-    error BRRRaffle_TicketIdTooLow();
-    error BRRRaffle_NotTicketOwner();
-    error BRRRaffle_NoPrizeWonForBracket();
-    error BRRRaffle_BracketMustBeHigher();
-    error BRRRaffle_LotteryNotClosed();
-    error BRRRaffle_LotteryHasNotFinished();
-    error BRRRaffle_NonExistentRequest();
-    error BRRRaffle_CannotRecoverUSDC();
-    error BRRRaffle_MinPriceGreaterThanMaxPrice();
-    error BRRRaffle_MaxTicketsMustBeGreaterThanZero();
-    error BRRRaffle_ZeroAddress();
-    error BRRRaffle_RoundNotFinished();
-    error BRRRaffle_LotteryLengthTooShort();
-    error BRRRaffle_OutOfBoundsPrice();
-    error BRRRaffle_DiscountDivisorTooLow();
-    error BRRRaffle_TreasuryFeeTooHigh();
-    error BRRRaffle_InvalidRewardsBreakdown();
-    error BRRRaffle_InvalidTicketClaim();
 
     event AdminTokenRecovery(address token, uint256 amount);
     event LotteryClose(uint256 indexed lotteryId, uint256 firstTicketIdNextLottery);
@@ -179,10 +143,10 @@ contract BRRRaffle is ReentrancyGuard, IBRRRaffle, Ownable {
         nonReentrant
         notContract
     {
-        if (_ticketNumbers.length == 0) revert BRRRaffle_NoTicketsSpecified();
-        if (_ticketNumbers.length > maxNumberTicketsPerBuyOrClaim) revert BRRRaffle_TicketsExceedMaximum();
-        if (_lotteries[_lotteryId].status != Status.Open) revert BRRRaffle_LotteryNotOpen();
-        if (block.timestamp >= _lotteries[_lotteryId].endTime) revert BRRRaffle_LotteryHasFinished();
+        require(_ticketNumbers.length != 0, "No ticket specified");
+        require(_ticketNumbers.length <= maxNumberTicketsPerBuyOrClaim, "Too many tickets");
+        require(_lotteries[_lotteryId].status == Status.Open, "Lottery is not open");
+        require(block.timestamp < _lotteries[_lotteryId].endTime, "Lottery is over");
 
         // Calculate number of USDC to this contract
         uint256 amountUsdcToTransfer = _calculateTotalPriceForBulkTickets(
@@ -213,22 +177,22 @@ contract BRRRaffle is ReentrancyGuard, IBRRRaffle, Ownable {
         nonReentrant
         notContract
     {
-        if (_ticketIds.length != _brackets.length) revert BRRRaffle_LengthsUnmatched();
-        if (_ticketIds.length == 0) revert BRRRaffle_EmptyArray();
-        if (_ticketIds.length > maxNumberTicketsPerBuyOrClaim) revert BRRRaffle_TicketsExceedMaximum();
-        if (_lotteries[_lotteryId].status != Status.Claimable) revert BRRRaffle_ClaimNotOpen();
+        require(_ticketIds.length == _brackets.length, "Not same length");
+        require(_ticketIds.length != 0, "Length must be >0");
+        require(_ticketIds.length <= maxNumberTicketsPerBuyOrClaim, "Too many tickets");
+        require(_lotteries[_lotteryId].status == Status.Claimable, "Lottery not claimable");
 
         // Initializes the rewardInUsdcToTransfer
         uint256 rewardInUsdcToTransfer;
 
-        for (uint256 i = 0; i < _ticketIds.length; i++) {
-            if (_brackets[i] >= 6) revert BRRRaffle_BracketOutOfRange();
+        for (uint256 i = 0; i < _ticketIds.length; ++i) {
+            require(_brackets[i] < 6, "Bracket out of range"); // Must be between 0 and 5
 
             uint256 thisTicketId = _ticketIds[i];
 
-            if (_lotteries[_lotteryId].firstTicketIdNextLottery <= thisTicketId) revert BRRRaffle_TicketIdTooHigh();
-            if (_lotteries[_lotteryId].firstTicketId > thisTicketId) revert BRRRaffle_TicketIdTooLow();
-            if (_tickets[thisTicketId].owner != msg.sender) revert BRRRaffle_NotTicketOwner();
+            require(_lotteries[_lotteryId].firstTicketIdNextLottery > thisTicketId, "TicketId too high");
+            require(_lotteries[_lotteryId].firstTicketId <= thisTicketId, "TicketId too low");
+            require(msg.sender == _tickets[thisTicketId].owner, "Not the owner");
 
             // Update the lottery ticket owner to 0x address
             _tickets[thisTicketId].owner = address(0);
@@ -236,12 +200,13 @@ contract BRRRaffle is ReentrancyGuard, IBRRRaffle, Ownable {
             uint256 rewardForTicketId = _calculateRewardsForTicketId(_lotteryId, thisTicketId, _brackets[i]);
 
             // Check user is claiming the correct bracket
-            if (rewardForTicketId == 0) revert BRRRaffle_NoPrizeWonForBracket();
+            require(rewardForTicketId != 0, "No prize for this bracket");
 
             if (_brackets[i] != 5) {
-                if (_calculateRewardsForTicketId(_lotteryId, thisTicketId, _brackets[i] + 1) != 0) {
-                    revert BRRRaffle_BracketMustBeHigher();
-                }
+                require(
+                    _calculateRewardsForTicketId(_lotteryId, thisTicketId, _brackets[i] + 1) == 0,
+                    "Bracket must be higher"
+                );
             }
 
             // Increment the reward to transfer
@@ -262,13 +227,11 @@ contract BRRRaffle is ReentrancyGuard, IBRRRaffle, Ownable {
      */
     function claimFreeTickets(uint256 _lotteryId, uint32[] memory _ticketNumbers) external nonReentrant notContract {
         // checks the lottery is open
-        if (_lotteries[_lotteryId].status != Status.Open) revert BRRRaffle_LotteryNotOpen();
+        require(_lotteries[_lotteryId].status == Status.Open, "Lottery is not open");
         // checks the lottery has not finished
-        if (block.timestamp >= _lotteries[_lotteryId].endTime) revert BRRRaffle_LotteryHasFinished();
+        require(block.timestamp < _lotteries[_lotteryId].endTime, "Lottery is over");
         // checks the user has earned x amount of tickets
-        if (!rewardValidator.validateTickets(msg.sender, uint8(_ticketNumbers.length))) {
-            revert BRRRaffle_InvalidTicketClaim();
-        }
+        require(rewardValidator.validateTickets(msg.sender, uint8(_ticketNumbers.length)), "Invalid ticket claim");
         // assigns the ticket to the user
         _assignTickets(_lotteryId, _ticketNumbers);
 
@@ -276,10 +239,10 @@ contract BRRRaffle is ReentrancyGuard, IBRRRaffle, Ownable {
     }
 
     function _assignTickets(uint256 _lotteryId, uint32[] memory _ticketNumbers) private {
-        for (uint256 i = 0; i < _ticketNumbers.length; i++) {
+        for (uint256 i = 0; i < _ticketNumbers.length; ++i) {
             uint32 thisTicketNumber = _ticketNumbers[i];
 
-            if (thisTicketNumber < 1000000 || thisTicketNumber > 1999999) revert BRRRaffle_TicketNumberOutOfRange();
+            require((thisTicketNumber >= 1000000) && (thisTicketNumber <= 1999999), "Outside range");
 
             // Update the count for each winning number bracket
             _numberTicketsPerLotteryId[_lotteryId][1 + (thisTicketNumber % 10)]++;
@@ -307,8 +270,8 @@ contract BRRRaffle is ReentrancyGuard, IBRRRaffle, Ownable {
      * @dev Callable by operator
      */
     function closeLottery(uint256 _lotteryId, bytes32 _commitHash) external override nonReentrant onlyOperator {
-        if (_lotteries[_lotteryId].status != Status.Open) revert BRRRaffle_LotteryNotOpen();
-        if (block.timestamp <= _lotteries[_lotteryId].endTime) revert BRRRaffle_LotteryHasNotFinished();
+        require(_lotteries[_lotteryId].status == Status.Open, "Lottery not open");
+        require(block.timestamp > _lotteries[_lotteryId].endTime, "Lottery not over");
         _lotteries[_lotteryId].firstTicketIdNextLottery = currentTicketId;
 
         randomGenerator.requestRandomness(_commitHash);
@@ -330,10 +293,8 @@ contract BRRRaffle is ReentrancyGuard, IBRRRaffle, Ownable {
         nonReentrant
         onlyOperator
     {
-        if (_lotteries[_lotteryId].status != Status.Close) revert BRRRaffle_LotteryNotClosed();
-        if (!randomGenerator.getRequest(randomGenerator.viewLatestRaffleId()).exists) {
-            revert BRRRaffle_NonExistentRequest();
-        }
+        require(_lotteries[_lotteryId].status == Status.Close, "Lottery not close");
+        require(randomGenerator.getRequest(randomGenerator.viewLatestRaffleId()).exists, "Non existent request");
 
         // Generate a Random number using NativeRNG
         uint32 finalNumber = randomGenerator.generateRandomNumber(_lotteryId, _commit);
@@ -349,7 +310,7 @@ contract BRRRaffle is ReentrancyGuard, IBRRRaffle, Ownable {
         uint256 amountToWithdrawToTreasury;
 
         // Calculate prizes in USDC for each bracket by starting from the highest one
-        for (uint32 i = 0; i < 6; i++) {
+        for (uint32 i = 0; i < 6; ++i) {
             uint32 j = 5 - i;
             uint32 transformedWinningNumber = _bracketCalculator[j] + (finalNumber % (uint32(10) ** (j + 1)));
 
@@ -407,7 +368,7 @@ contract BRRRaffle is ReentrancyGuard, IBRRRaffle, Ownable {
      * @dev Callable by owner or injector address
      */
     function injectFunds(uint256 _lotteryId, uint256 _amount) external override onlyOwnerOrInjector {
-        if (_lotteries[_lotteryId].status != Status.Open) revert BRRRaffle_LotteryNotOpen();
+        require(_lotteries[_lotteryId].status == Status.Open, "Lottery not open");
 
         usdc.safeTransferFrom(msg.sender, address(this), _amount);
         _lotteries[_lotteryId].amountCollectedInUsdc += _amount;
@@ -431,19 +392,25 @@ contract BRRRaffle is ReentrancyGuard, IBRRRaffle, Ownable {
         uint256[6] calldata _rewardsBreakdown,
         uint256 _treasuryFee
     ) external override onlyOperator {
-        if (currentLotteryId != 0 && _lotteries[currentLotteryId].status != Status.Claimable) {
-            revert BRRRaffle_RoundNotFinished();
-        }
-        if (_endTime - block.timestamp < MIN_LENGTH_LOTTERY) revert BRRRaffle_LotteryLengthTooShort();
-        if (_priceTicketInUsdc < minPriceTicketInUsdc || _priceTicketInUsdc > maxPriceTicketInUsdc) {
-            revert BRRRaffle_OutOfBoundsPrice();
-        }
-        if (_discountDivisor < MIN_DISCOUNT_DIVISOR) revert BRRRaffle_DiscountDivisorTooLow();
-        if (_treasuryFee > MAX_TREASURY_FEE) revert BRRRaffle_TreasuryFeeTooHigh();
-        if (
-            _rewardsBreakdown[0] + _rewardsBreakdown[1] + _rewardsBreakdown[2] + _rewardsBreakdown[3]
-                + _rewardsBreakdown[4] + _rewardsBreakdown[5] != 10000
-        ) revert BRRRaffle_InvalidRewardsBreakdown();
+        require(
+            (currentLotteryId == 0) || (_lotteries[currentLotteryId].status == Status.Claimable),
+            "Not time to start lottery"
+        );
+        require((_endTime - block.timestamp) > MIN_LENGTH_LOTTERY, "Lottery length outside of range");
+        require(
+            (_priceTicketInUsdc >= minPriceTicketInUsdc) && (_priceTicketInUsdc <= maxPriceTicketInUsdc),
+            "Outside of limits"
+        );
+        require(_discountDivisor >= MIN_DISCOUNT_DIVISOR, "Discount divisor too low");
+        require(_treasuryFee <= MAX_TREASURY_FEE, "Treasury fee too high");
+
+        require(
+            (
+                _rewardsBreakdown[0] + _rewardsBreakdown[1] + _rewardsBreakdown[2] + _rewardsBreakdown[3]
+                    + _rewardsBreakdown[4] + _rewardsBreakdown[5]
+            ) == 10000,
+            "Rewards must equal 10000"
+        );
 
         currentLotteryId++;
 
@@ -482,7 +449,7 @@ contract BRRRaffle is ReentrancyGuard, IBRRRaffle, Ownable {
      * @dev Only callable by owner.
      */
     function recoverWrongTokens(address _tokenAddress, uint256 _tokenAmount) external onlyOwner {
-        if (_tokenAddress == address(usdc)) revert BRRRaffle_CannotRecoverUSDC();
+        require(_tokenAddress != address(usdc), "Cannot be USDC");
 
         IERC20(_tokenAddress).safeTransfer(msg.sender, _tokenAmount);
 
@@ -499,7 +466,7 @@ contract BRRRaffle is ReentrancyGuard, IBRRRaffle, Ownable {
         external
         onlyOwner
     {
-        if (_minPriceTicketInUsdc > _maxPriceTicketInUsdc) revert BRRRaffle_MinPriceGreaterThanMaxPrice();
+        require(_minPriceTicketInUsdc <= _maxPriceTicketInUsdc, "minPrice must be < maxPrice");
 
         minPriceTicketInUsdc = _minPriceTicketInUsdc;
         maxPriceTicketInUsdc = _maxPriceTicketInUsdc;
@@ -510,7 +477,7 @@ contract BRRRaffle is ReentrancyGuard, IBRRRaffle, Ownable {
      * @dev Only callable by owner
      */
     function setMaxNumberTicketsPerBuy(uint256 _maxNumberTicketsPerBuy) external onlyOwner {
-        if (_maxNumberTicketsPerBuy == 0) revert BRRRaffle_MaxTicketsMustBeGreaterThanZero();
+        require(_maxNumberTicketsPerBuy != 0, "Must be > 0");
         maxNumberTicketsPerBuyOrClaim = _maxNumberTicketsPerBuy;
     }
 
@@ -526,9 +493,9 @@ contract BRRRaffle is ReentrancyGuard, IBRRRaffle, Ownable {
         address _treasuryAddress,
         address _injectorAddress
     ) external onlyOwner {
-        if (_operatorAddress == address(0) || _treasuryAddress == address(0) || _injectorAddress == address(0)) {
-            revert BRRRaffle_ZeroAddress();
-        }
+        require(_operatorAddress != address(0), "Cannot be zero address");
+        require(_treasuryAddress != address(0), "Cannot be zero address");
+        require(_injectorAddress != address(0), "Cannot be zero address");
 
         operatorAddress = _operatorAddress;
         treasuryAddress = _treasuryAddress;
@@ -543,8 +510,8 @@ contract BRRRaffle is ReentrancyGuard, IBRRRaffle, Ownable {
      * @param _usdcAddress: address of the USDC token
      */
     function setUsdcAddress(address _usdcAddress) external onlyOwner {
-        if (_usdcAddress == address(0)) revert BRRRaffle_ZeroAddress();
-        if (_lotteries[currentLotteryId].status != Status.Pending) revert BRRRaffle_RoundNotFinished();
+        require(_usdcAddress != address(0), "Zero address");
+        require(_lotteries[currentLotteryId].status == Status.Pending, "Lottery in progress");
         usdc = IERC20(_usdcAddress);
     }
 
@@ -559,8 +526,8 @@ contract BRRRaffle is ReentrancyGuard, IBRRRaffle, Ownable {
         pure
         returns (uint256)
     {
-        if (_discountDivisor < MIN_DISCOUNT_DIVISOR) revert BRRRaffle_DiscountDivisorTooLow();
-        if (_numberTickets == 0) revert BRRRaffle_NoTicketsSpecified();
+        require(_discountDivisor >= MIN_DISCOUNT_DIVISOR, "Must be >= MIN_DISCOUNT_DIVISOR");
+        require(_numberTickets != 0, "Number of tickets must be > 0");
 
         return _calculateTotalPriceForBulkTickets(_discountDivisor, _priceTicket, _numberTickets);
     }

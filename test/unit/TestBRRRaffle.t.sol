@@ -189,7 +189,7 @@ contract TestBRRRaffle is Test {
         // buy the winning ticket
         vm.startPrank(USER, USER);
         usdc.approve(address(raffle), LARGE_AMOUNT);
-        ticketNumbers.push(1737290);
+        ticketNumbers.push(1891376);
         raffle.buyTickets(1, ticketNumbers);
         vm.stopPrank();
         // complete the lottery
@@ -319,7 +319,7 @@ contract TestBRRRaffle is Test {
         proof[0] = 0xa2b193d49eda7315164f046c1fa0491dfcaca76b5f19e62512caa4f531d71c8b;
 
         ticketNumbers.push(1e6 + 69);
-        ticketNumbers.push(1737290);
+        ticketNumbers.push(1891376);
         vm.startPrank(USER, USER);
         rewardMinter.mint(0, proof);
         rewardMinter.mint(1, proof);
@@ -769,7 +769,7 @@ contract TestBRRRaffle is Test {
         // buy some tickets
         vm.startPrank(USER, USER);
         usdc.approve(address(raffle), LARGE_AMOUNT);
-        ticketNumbers.push(1737290);
+        ticketNumbers.push(1891376);
 
         raffle.buyTickets(1, ticketNumbers);
         vm.stopPrank();
@@ -801,7 +801,7 @@ contract TestBRRRaffle is Test {
         // buy some tickets
         vm.startPrank(USER, USER);
         usdc.approve(address(raffle), LARGE_AMOUNT);
-        ticketNumbers.push(1737290);
+        ticketNumbers.push(1891376);
 
         raffle.buyTickets(1, ticketNumbers);
         vm.stopPrank();

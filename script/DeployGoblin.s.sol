@@ -7,8 +7,6 @@ import {GoblinDistributor} from "../src/GoblinDistributor.sol";
 
 contract DeployGoblin is Script {
     HelperConfig public helperConfig;
-
-    uint256 deployerKey;
     address usdc;
 
     address[] winningWallets;
@@ -17,7 +15,7 @@ contract DeployGoblin is Script {
     function run() external returns (GoblinDistributor distributor) {
         helperConfig = new HelperConfig();
 
-        (usdc, deployerKey) = helperConfig.activeNetworkConfig();
+        (usdc,) = helperConfig.activeNetworkConfig();
 
         // Winner Whitelist
         winningWallets.push(0x9D7Df63F3E57533454E6923cb7Daf5e81D9a1AE1);
@@ -73,7 +71,7 @@ contract DeployGoblin is Script {
         winningAmounts.push(215790000);
         winningAmounts.push(221880000);
 
-        vm.startBroadcast(deployerKey);
+        vm.startBroadcast();
         distributor = new GoblinDistributor(usdc);
         distributor.setWinners(winningWallets, winningAmounts);
         vm.stopBroadcast();

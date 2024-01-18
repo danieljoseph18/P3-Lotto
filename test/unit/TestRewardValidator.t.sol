@@ -60,8 +60,8 @@ contract TestRewardValidator is Test {
         assertEq(ticketReward, 3);
         assertEq(xpReward, 750);
         (ticketReward, xpReward) = rewardValidator.prizeForTokenId(5);
-        assertEq(ticketReward, 2);
-        assertEq(xpReward, 500);
+        assertEq(ticketReward, 3);
+        assertEq(xpReward, 750);
         (ticketReward, xpReward) = rewardValidator.prizeForTokenId(6);
         assertEq(ticketReward, 1);
         assertEq(xpReward, 250);

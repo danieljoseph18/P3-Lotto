@@ -10,6 +10,6 @@ interface IRewardValidator {
         external
         view
         returns (bool);
-    function setPrizes(uint8[] calldata _tokenIds, Types.Prize[] calldata _prizes) external;
+    function setPrizes(Types.Prize[] calldata _prizes) external;
     function addUserRewards(address _user, uint8 _tokenId) external;
 }

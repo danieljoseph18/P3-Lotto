@@ -32,12 +32,11 @@ contract HelperConfig is Script {
         return NetworkConfig({usdc: address(mockUsdc), deployerKey: DEFAULT_ANVIL_KEY});
     }
 
-    function getBaseTestnetNetworkConfig() public returns (NetworkConfig memory) {
-        MockERC20 mockUsdc = new MockERC20("Mock USDC", "MUSDC", 0);
-        return NetworkConfig({usdc: address(mockUsdc), deployerKey: vm.envUint("PRIVATE_KEY")});
+    function getBaseTestnetNetworkConfig() public pure returns (NetworkConfig memory) {
+        return NetworkConfig({usdc: 0x15DC6BB178857fD1ad54934436221211eE5d0180, deployerKey: 0x0});
     }
 
-    function getBaseMainnetNetworkConfig() public view returns (NetworkConfig memory) {
-        return NetworkConfig({usdc: 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913, deployerKey: vm.envUint("PRIVATE_KEY")});
+    function getBaseMainnetNetworkConfig() public pure returns (NetworkConfig memory) {
+        return NetworkConfig({usdc: 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913, deployerKey: 0x0});
     }
 }

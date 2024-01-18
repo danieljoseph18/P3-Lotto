@@ -27,6 +27,7 @@ contract GoblinDistributor is Ownable, ReentrancyGuard {
         usdc = IERC20(_usdc);
     }
 
+    /// @dev USDC can only be updated before claimOpen
     function updateUsdc(address _usdc) external onlyOwner {
         if (claimOpen != 0) {
             require(block.timestamp < claimOpen, "GoblinDistributor: Claiming Already Open");
@@ -37,6 +38,7 @@ contract GoblinDistributor is Ownable, ReentrancyGuard {
     function setClaimOpen(uint32 _claimOpen) external onlyOwner {
         require(block.timestamp < _claimOpen, "GoblinDistributor: Invalid Timestamp");
         if (claimOpen != 0) {
+            // If ClaimOpen Set, Require Claiming Not Open Already
             require(block.timestamp < claimOpen, "GoblinDistributor: Claiming Already Open");
         }
         claimOpen = _claimOpen;

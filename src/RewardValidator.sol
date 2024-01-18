@@ -40,15 +40,19 @@ contract RewardValidator is IRewardValidator, Ownable {
         isInitialised = true;
         brrRaffle = _brrRaffle;
         rewardMinter = _rewardMinter;
-        prizesSet = false;
     }
 
-    function validateTickets(address _user, uint8 _numTickets) external onlyRaffle hasSetPrizes returns (bool) {
+    function validateTickets(address _user, uint8 _numTickets)
+        external
+        onlyRaffle
+        hasSetPrizes
+        returns (bool ticketsValid)
+    {
         if (userRewards[_user].tickets >= _numTickets) {
             userRewards[_user].tickets -= _numTickets;
-            return true;
+            ticketsValid = true;
         } else {
-            return false;
+            ticketsValid = false;
         }
     }
 
@@ -77,12 +81,11 @@ contract RewardValidator is IRewardValidator, Ownable {
         return MerkleProof.verify(_merkleProof, merkleRoots[_tokenId], leaf);
     }
 
-    function setPrizes(uint8[] calldata _tokenIds, Types.Prize[] calldata _prizes) external onlyOwner {
-        require(_tokenIds.length == _prizes.length, "RV: Invalid Array Lengths");
-        require(_tokenIds.length == MAX_TOKEN_ID + 1, "RV: Invalid Array Lengths");
-        for (uint256 i = 0; i < _tokenIds.length;) {
-            require(_tokenIds[i] <= MAX_TOKEN_ID, "RV: Invalid Token ID");
-            prizeForTokenId[_tokenIds[i]] = _prizes[i];
+    function setPrizes(Types.Prize[] calldata _prizes) external onlyOwner {
+        uint256 len = _prizes.length;
+        require(len == MAX_TOKEN_ID + 1, "RV: Invalid Array Lengths");
+        for (uint8 i = 0; i < len;) {
+            prizeForTokenId[i] = _prizes[i];
             unchecked {
                 ++i;
             }

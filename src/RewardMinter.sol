@@ -4,8 +4,9 @@ pragma solidity 0.8.23;
 import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IRewardValidator} from "./interfaces/IRewardValidator.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-contract RewardMinter is ERC1155 {
+contract RewardMinter is ERC1155, ReentrancyGuard {
     IRewardValidator rewardValidator;
     // Earned by using PRINT3R Mainnet
     uint256 constant EARLY_ADOPTER = 0;
@@ -48,7 +49,7 @@ contract RewardMinter is ERC1155 {
      * @dev Checks if a user is whitelisted for a given token ID.
      * Only 1 claim per user
      */
-    function mint(uint8 _tokenId, bytes32[] calldata _merkleProof) public {
+    function mint(uint8 _tokenId, bytes32[] calldata _merkleProof) public nonReentrant {
         require(_tokenId <= AERODROME, "RM: Invalid Token ID");
         require(rewardValidator.verifyWhitelisted(msg.sender, _tokenId, _merkleProof), "RM: Not Whitelisted");
         require(!hasClaimed[msg.sender][_tokenId], "RM: Already Claimed");

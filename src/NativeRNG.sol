@@ -21,7 +21,7 @@ contract NativeRNG is INativeRNG, Ownable {
     uint32 public lastRandomNumber;
 
     constructor() Ownable(msg.sender) {
-        // Fulfill the 0 request
+        // Fulfill the 0th request
         requests[0] =
             Types.Request({fulfilled: true, exists: true, randomResult: 0, minUpdateTime: 0, commitHash: bytes32(0)});
         requestIds.push(0);
@@ -45,7 +45,7 @@ contract NativeRNG is INativeRNG, Ownable {
 
     /**
      * @notice Requests the generation of a pseudo-random number.
-     * @param _commitHash The commit hash used for generating the random number.
+     * @param _commitHash The abi.encoded commit hash used for generating the random number.
      * @dev Emits a RequestRandomness event upon success. Can only be called by the BRR Raffle contract.
      * Reverts if a previous request is not yet fulfilled or if the commit hash is zero.
      */
@@ -70,14 +70,19 @@ contract NativeRNG is INativeRNG, Ownable {
      * @param _seed The seed used to generate randomness.
      * @return The generated pseudo-random number.
      * @dev Can only be called by the BRR Raffle contract. This method is pseudo-random and should not be used
-     * for true randomness. Use Chainlink VRF for true randomness. The generated number is between 1,000,000 and 1,999,999.
+     * for true randomness. Use Chainlink VRF for true randomness (limited chain availability).
+     * The generated number is between 1,000,000 and 1,999,999.
      * Reverts if the request does not exist, the seed is invalid, randomness is already fulfilled, or the minimum update
      * delay has not passed.
      */
     function generateRandomNumber(uint256 _requestId, string memory _seed) external onlyRaffle returns (uint32) {
         Types.Request memory request = requests[_requestId];
         require(request.exists, "NRNG: Request Does Not Exist");
-        require(request.commitHash == keccak256(abi.encode(_seed)), "NRNG: Invalid Seed");
+        require(
+            request.commitHash == keccak256(abi.encode(_seed))
+                || request.commitHash == keccak256(abi.encodePacked(_seed)),
+            "NRNG: Invalid Seed"
+        );
         require(!request.fulfilled, "NRNG: Already Fulfilled");
         require(block.timestamp >= request.minUpdateTime, "NRNG: Delay");
         uint256 randomResult = uint256(

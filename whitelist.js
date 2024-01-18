@@ -2,18 +2,19 @@ const { MerkleTree } = require('merkletreejs');
 const keccak256 = require('keccak256');
 
 const whitelists = {
-    0: ["0x02A2012c36644f4e4b36A14EBe13E23c96f4C5b6", "0x556e99A195CEd41C0bdB86d57Ee204451a0449fc"],
-    1: ["0x02A2012c36644f4e4b36A14EBe13E23c96f4C5b6", "0x556e99A195CEd41C0bdB86d57Ee204451a0449fc"],
-    2: ["0x02A2012c36644f4e4b36A14EBe13E23c96f4C5b6", "0x556e99A195CEd41C0bdB86d57Ee204451a0449fc"],
-    3: ["0x02A2012c36644f4e4b36A14EBe13E23c96f4C5b6", "0x556e99A195CEd41C0bdB86d57Ee204451a0449fc"],
-    4: ["0x02A2012c36644f4e4b36A14EBe13E23c96f4C5b6", "0x556e99A195CEd41C0bdB86d57Ee204451a0449fc"],
-    5: ["0x02A2012c36644f4e4b36A14EBe13E23c96f4C5b6", "0x556e99A195CEd41C0bdB86d57Ee204451a0449fc"],
-    6: ["0x02A2012c36644f4e4b36A14EBe13E23c96f4C5b6", "0x556e99A195CEd41C0bdB86d57Ee204451a0449fc"],
-    7: ["0x02A2012c36644f4e4b36A14EBe13E23c96f4C5b6"],
-    8: ["0x02A2012c36644f4e4b36A14EBe13E23c96f4C5b6"],
-    9: ["0x02A2012c36644f4e4b36A14EBe13E23c96f4C5b6"],
+    0: ["0x4F6e437f7E90087f7090AcfE967D77ba0B4c7444", "0x02A2012c36644f4e4b36A14EBe13E23c96f4C5b6"],
+    1: ["0x4F6e437f7E90087f7090AcfE967D77ba0B4c7444", "0x556e99A195CEd41C0bdB86d57Ee204451a0449fc"],
+    2: ["0x4F6e437f7E90087f7090AcfE967D77ba0B4c7444", "0x556e99A195CEd41C0bdB86d57Ee204451a0449fc"],
+    3: ["0x4F6e437f7E90087f7090AcfE967D77ba0B4c7444", "0x556e99A195CEd41C0bdB86d57Ee204451a0449fc"],
+    4: ["0x4F6e437f7E90087f7090AcfE967D77ba0B4c7444", "0x556e99A195CEd41C0bdB86d57Ee204451a0449fc"],
+    5: ["0x4F6e437f7E90087f7090AcfE967D77ba0B4c7444", "0x556e99A195CEd41C0bdB86d57Ee204451a0449fc"],
+    6: ["0x4F6e437f7E90087f7090AcfE967D77ba0B4c7444", "0x556e99A195CEd41C0bdB86d57Ee204451a0449fc"],
+    7: ["0x4F6e437f7E90087f7090AcfE967D77ba0B4c7444"],
+    8: ["0x4F6e437f7E90087f7090AcfE967D77ba0B4c7444"],
+    9: ["0x4F6e437f7E90087f7090AcfE967D77ba0B4c7444"],
     10: [
         "0x00000002D88f9b3f4eB303564817fff4AdcdE46f",
+        "0x4F6e437f7E90087f7090AcfE967D77ba0B4c7444",
         "0x0000345677BD3C3A5F816e24445c08218c1CbB78",
         "0x00010F0dC8c73653b68238dDf90f792c24407628",
         "0x000F38c11De32dF3BFD065c37Eec99a00a42546f",
@@ -8011,8 +8012,8 @@ const whitelists = {
         "0xAd7A1D3fF22f9bfe73D09CDaa3634853F4091978",
         "0xDd514d728635b6Ca57Cf8510c1567dc8B18cd5A0"
       ],
-    11: ["0x02A2012c36644f4e4b36A14EBe13E23c96f4C5b6"],
-    12: ["0x02A2012c36644f4e4b36A14EBe13E23c96f4C5b6"]
+    11: ["0x4F6e437f7E90087f7090AcfE967D77ba0B4c7444"],
+    12: ["0x4F6e437f7E90087f7090AcfE967D77ba0B4c7444"]
 }
 
 // Function to create a Merkle Tree and get its root
@@ -8024,7 +8025,7 @@ function createMerkleTree(addresses) {
 
 // Creating Merkle trees for each token ID and storing their roots
 const merkleRoots = {};
-for (let tokenId = 0; tokenId <= 11; tokenId++) {
+for (let tokenId = 0; tokenId <= 13; tokenId++) {
     const merkleTree = createMerkleTree(whitelists[tokenId] || []);
     merkleRoots[tokenId] = merkleTree.getHexRoot();
 }
@@ -8043,7 +8044,7 @@ const addressToProve = "0x02A2012c36644f4e4b36A14EBe13E23c96f4C5b6";
 // const proof = generateProof(addressToProve1, tokenId);
 
 // Set Up 1
-for(let i = 0; i < 12; i++) {
+for(let i = 0; i <= 13; i++) {
     console.log(i);
     console.log(`Merkle Root ${i}: `, merkleRoots[i]);
     console.log(`Proof For Token ID ${i}: `, generateProof(addressToProve, i));
